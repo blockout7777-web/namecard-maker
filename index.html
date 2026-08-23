@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✦ 명함 메이커</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- qrcode.min.js(압축본)는 한글 인코딩 버그가 있어 같은 버전의 비압축본을 사용 -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<!-- 글꼴: Pretendard(jsDelivr) + Google Fonts 한글 4종 -->
+<link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gothic+A1:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&family=Noto+Serif+KR:wght@400;700;900&display=swap">
+<style>
+  :root{
+    --bg:#0d1117;
+    --bg-soft:#161b22;
+    --line:#262c36;
+    --text:#e6edf3;
+    --muted:#8b949e;
+    --accent:#6ea8fe;
+    --accent-2:#a78bfa;
+    --radius:14px;
+
+    /* 명함 기본색 (다크 모던) — JS가 선택한 스타일로 덮어씀 */
+    --c-bg:linear-gradient(135deg,#1E293B 0%,#334155 100%);
+    --c-border:#46556d;
+    --c-text:#FFFFFF;
+    --c-sub:#CBD5E1;
+    --c-accent:#E8B44A;
+    --c-row:#E2E8F0;
+    --c-divider:#E8B44A;
+    --c-bar:#E8B44A;
+    --c-glow:rgba(232,180,74,.18);
+    --c-shadow:0 18px 44px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Pretendard','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,
+                'Malgun Gothic','맑은 고딕',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ── 헤더 ── */
+  header{
+    padding:28px 24px 22px;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+    background:var(--bg-soft);
+  }
+  header h1{
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:-0.5px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  header p{
+    margin-top:8px;
+    font-size:14px;
+    color:var(--muted);
+  }
+
+  /* ── 레이아웃 ── */
+  main{
+    display:flex;
+    gap:32px;
+    align-items:flex-start;
+    max-width:1100px;
+    margin:0 auto;
+    padding:32px 24px 60px;
+  }
+  #panel{
+    flex:0 0 400px;
+    width:400px;
+    background:var(--bg-soft);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:24px;
+  }
+  #panel h2{
+    font-size:15px;
+    font-weight:700;
+    margin-bottom:18px;
+  }
+  .field{margin-bottom:16px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .field label .req{color:#f2777a;margin-left:2px;}
+  .field input{
+    width:100%;
+    padding:11px 13px;
+    font-size:14px;
+    font-family:inherit;
+    color:var(--text);
+    background:#0d1117;
+    border:1px solid var(--line);
+    border-radius:9px;
+    outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .field input::placeholder{color:#4d5661;}
+  .field input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(110,168,254,.15);
+  }
+
+  #stage{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+  }
+  .stage-label{
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:1px;
+  }
+  #cardBox{
+    display:flex;
+    justify-content:center;
+    width:100%;
+  }
+
+  /* ── 명함 (450 × 270 = 9 : 5.4) ── */
+  #card{
+    width:450px;
+    height:270px;
+    flex:0 0 auto;
+    transform-origin:top center;
+    position:relative;
+    overflow:hidden;
+    border-radius:16px;
+    padding:32px 34px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    /* 색상은 전부 스타일 변수로 — JS가 #card 인라인으로 덮어씀 */
+    background:var(--c-bg);
+    color:var(--c-text);
+    border:1px solid var(--c-border);
+    box-shadow:var(--c-shadow);
+  }
+  #card::before{
+    content:'';
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:5px;
+    background:var(--c-bar);
+  }
+  #card::after{
+    content:'';
+    position:absolute;
+    right:-70px; top:-70px;
+    width:200px; height:200px;
+    border-radius:50%;
+    background:radial-gradient(circle,var(--c-glow),transparent 70%);
+  }
+  .card-top{
+    position:relative;
+    z-index:1;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+  }
+  .card-top .txt{flex:1;min-width:0;}
+
+  /* 로고 좌상단 스타일 */
+  #card.logo-left .c-logo{order:-1;}
+
+  /* 중앙 정렬 스타일 */
+  #card.align-center .card-top{
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+  }
+  #card.align-center .txt{flex:none;text-align:center;width:100%;}
+  #card.align-center .c-sub{justify-content:center;}
+  #card.align-center .card-bottom .rows{align-items:center;}
+  .c-logo{
+    width:56px;
+    height:56px;
+    flex:0 0 56px;
+    object-fit:contain;
+    border-radius:8px;
+  }
+  .c-name{
+    font-size:29px;
+    font-weight:800;
+    letter-spacing:-0.6px;
+    line-height:1.2;
+  }
+  .c-name.empty{opacity:.45;font-weight:600;}
+  .c-sub{
+    margin-top:9px;
+    font-size:14px;
+    color:var(--c-sub);
+    display:flex;
+    align-items:center;
+    gap:9px;
+    flex-wrap:wrap;
+  }
+  .c-sub .dot{
+    width:3px;height:3px;border-radius:50%;
+    background:currentColor;opacity:.6;flex:0 0 auto;
+  }
+  .c-company{color:var(--c-accent);font-weight:600;}
+
+  .card-bottom{
+    position:relative;
+    z-index:1;
+    border-top:1px solid var(--c-divider);
+    padding-top:14px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .card-bottom .rows{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+
+  /* QR — 오른쪽 하단 60×60 */
+  .c-qr{
+    flex:0 0 auto;
+    width:60px;
+    height:60px;
+    line-height:0;
+    border-radius:3px;
+  }
+  .c-qr img,
+  .c-qr canvas{
+    width:60px !important;
+    height:60px !important;
+    display:block;
+  }
+  /* 어두운 배경 스타일: QR 뒤 흰 패딩 4px */
+  #card.qr-pad .c-qr{
+    width:68px;
+    height:68px;
+    padding:4px;
+    background:#ffffff;
+    border-radius:5px;
+  }
+  .c-row{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-size:12.5px;
+    color:var(--c-row);
+    line-height:1.45;
+  }
+  .c-row .ic{
+    width:14px;
+    flex:0 0 14px;
+    text-align:center;
+    font-size:11px;
+    color:var(--c-accent);
+  }
+  .c-row .tx{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  /* ── 로고 업로드 ── */
+  .drop{
+    border:1.5px dashed #39414f;
+    border-radius:10px;
+    padding:22px 14px;
+    text-align:center;
+    font-size:13px;
+    color:var(--muted);
+    background:#0d1117;
+    cursor:pointer;
+    transition:border-color .15s, background .15s, color .15s;
+  }
+  .drop:hover,
+  .drop.over{
+    border-color:var(--accent);
+    color:var(--accent);
+    background:rgba(110,168,254,.07);
+  }
+  .drop .hint{
+    display:block;
+    margin-top:6px;
+    font-size:11px;
+    color:#4d5661;
+  }
+  .logo-preview{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#0d1117;
+  }
+  .logo-preview img{
+    width:46px;
+    height:46px;
+    flex:0 0 46px;
+    object-fit:contain;
+    background:#161b22;
+    border-radius:8px;
+  }
+  .logo-preview .meta{
+    flex:1;
+    min-width:0;
+    font-size:12px;
+    color:var(--muted);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .btn-del{
+    flex:0 0 auto;
+    padding:6px 12px;
+    font-family:inherit;
+    font-size:12px;
+    font-weight:600;
+    color:#f2777a;
+    background:transparent;
+    border:1px solid #4a2b30;
+    border-radius:8px;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .btn-del:hover{background:rgba(242,119,122,.12);}
+  .err{
+    margin-top:8px;
+    font-size:12px;
+    color:#f2777a;
+  }
+
+  /* ── 스타일 선택 ── */
+  .divider{
+    height:1px;
+    background:var(--line);
+    margin:22px 0 18px;
+  }
+  #styleList{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+  }
+  .style-card{
+    border:2px solid var(--line);
+    border-radius:10px;
+    padding:5px;
+    background:#0d1117;
+    cursor:pointer;
+    text-align:left;
+    font-family:inherit;
+    transition:border-color .15s, transform .1s;
+  }
+  .style-card:hover{border-color:#3d4756;}
+  .style-card:active{transform:scale(.98);}
+  .style-card.selected{border-color:var(--accent);}
+  .style-thumb{
+    position:relative;
+    height:62px;
+    border-radius:7px;
+    overflow:hidden;
+    padding:9px 10px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+  .style-thumb .bar{
+    position:absolute;
+    left:0;top:0;bottom:0;
+    width:3px;
+  }
+  .t-line{border-radius:2px;}
+  .t-name{width:52%;height:8px;}
+  .t-sub{width:34%;height:4px;margin-top:4px;}
+  .t-foot{padding-top:5px;}
+  .t-row{width:60%;height:3px;margin-bottom:3px;}
+  .t-row.short{width:44%;margin-bottom:0;}
+  .style-thumb.center .t-line{margin-left:auto;margin-right:auto;}
+  .style-name{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--muted);
+    padding:7px 3px 2px;
+  }
+  .style-card.selected .style-name{color:var(--accent);}
+  .style-name .check{
+    font-size:10px;
+    opacity:0;
+  }
+  .style-card.selected .style-name .check{opacity:1;}
+
+  /* ── 글꼴 선택 ── */
+  #fontList{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .font-card{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    padding:11px 13px;
+    border:2px solid var(--line);
+    border-radius:10px;
+    background:#0d1117;
+    color:var(--text);
+    cursor:pointer;
+    text-align:left;
+    transition:border-color .15s, transform .1s;
+  }
+  .font-card:hover{border-color:#3d4756;}
+  .font-card:active{transform:scale(.99);}
+  .font-card.selected{border-color:var(--accent);}
+  .font-card .fname{
+    font-size:15.5px;
+    line-height:1.35;
+    white-space:nowrap;
+  }
+  .font-card.selected .fname{color:var(--accent);}
+  .font-card .fsample{
+    font-size:12.5px;
+    color:var(--muted);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .hidden{display:none !important;}
+
+  /* ── 저장 / 공유 ── */
+  #createActions{
+    width:100%;
+    max-width:450px;
+    margin-top:4px;
+  }
+  .btn-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .btn-save{
+    flex:1 1 190px;
+    padding:14px 18px;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:700;
+    color:#0b1020;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    border:none;
+    border-radius:11px;
+    cursor:pointer;
+    transition:filter .15s, transform .1s;
+  }
+  .btn-save:hover{filter:brightness(1.08);}
+  .btn-save:active{transform:scale(.99);}
+  .btn-save:disabled{
+    filter:grayscale(.5) brightness(.8);
+    cursor:default;
+  }
+  .btn-png{
+    flex:1 1 150px;
+    padding:14px 16px;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:700;
+    color:var(--text);
+    background:#0d1117;
+    border:1px solid var(--line);
+    border-radius:11px;
+    cursor:pointer;
+    transition:border-color .15s, background .15s, transform .1s;
+  }
+  .btn-png:hover{
+    border-color:var(--accent);
+    background:rgba(110,168,254,.08);
+  }
+  .btn-png:active{transform:scale(.99);}
+  .btn-png:disabled{
+    opacity:.6;
+    cursor:default;
+  }
+  .save-msg{
+    margin-top:10px;
+    padding:10px 12px;
+    font-size:13px;
+    border-radius:9px;
+    text-align:center;
+    color:#f2777a;
+    background:rgba(242,119,122,.1);
+    border:1px solid #4a2b30;
+  }
+  .share-box{
+    margin-top:14px;
+    padding:16px;
+    border:1px solid #23503a;
+    border-radius:12px;
+    background:rgba(45,212,191,.07);
+  }
+  .share-ok{
+    font-size:15px;
+    font-weight:700;
+    color:#5ee9b5;
+    margin-bottom:12px;
+  }
+  .share-label{
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .share-row{
+    display:flex;
+    gap:8px;
+  }
+  .share-row input{
+    flex:1;
+    min-width:0;
+    padding:10px 12px;
+    font-family:inherit;
+    font-size:13px;
+    color:var(--text);
+    background:#0d1117;
+    border:1px solid var(--line);
+    border-radius:9px;
+    outline:none;
+  }
+  .btn-copy{
+    flex:0 0 auto;
+    padding:10px 16px;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:700;
+    color:#0b1020;
+    background:#5ee9b5;
+    border:none;
+    border-radius:9px;
+    cursor:pointer;
+    transition:filter .15s;
+  }
+  .btn-copy:hover{filter:brightness(1.06);}
+  .share-hint{
+    margin-top:10px;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .make-mine{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:22px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--accent);
+    text-decoration:none;
+    padding:10px 18px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    transition:border-color .15s, background .15s;
+  }
+  .make-mine:hover{
+    border-color:var(--accent);
+    background:rgba(110,168,254,.08);
+  }
+
+  /* ── 보기 모드 ── */
+  body.view-mode main{
+    justify-content:center;
+    align-items:center;
+    min-height:calc(100vh - 170px);
+    padding-top:40px;
+  }
+  /* main이 align-items:center라 #stage 폭이 명함(450px)만큼 벌어지는 것을 막음 */
+  body.view-mode #stage{
+    width:100%;
+    max-width:100%;
+    justify-content:center;   /* 늘어난 영역 안에서 명함을 세로 중앙에 */
+  }
+  body.view-mode #panel{display:none;}
+  body.view-mode .stage-label{display:none;}
+  body.view-mode #createActions{display:none;}
+
+  #status{
+    text-align:center;
+    padding:56px 24px;
+    color:var(--muted);
+    font-size:15px;
+  }
+  #status .big{
+    display:block;
+    font-size:34px;
+    margin-bottom:14px;
+  }
+  #status .msg{
+    font-size:17px;
+    font-weight:600;
+    color:var(--text);
+    margin-bottom:6px;
+  }
+
+  /* ── 모바일: 위 입력 / 아래 미리보기 ── */
+  @media (max-width:900px){
+    main{
+      flex-direction:column;
+      gap:24px;
+      padding:22px 16px 48px;
+    }
+    #panel{
+      flex:none;
+      width:100%;
+    }
+    #stage{width:100%;}
+
+    /* 스타일 카드 5개 → 3 + 2 (2줄) */
+    #styleList{grid-template-columns:repeat(3,1fr);}
+    .style-thumb{height:56px;padding:8px 9px;}
+    .style-name{
+      font-size:10.5px;
+      padding:6px 2px 2px;
+      gap:4px;
+      flex-wrap:wrap;
+      line-height:1.25;
+    }
+
+    /* 터치 영역 최소 48px */
+    .field input,
+    .btn-save,
+    .btn-png,
+    .btn-copy,
+    .btn-del,
+    .font-card,
+    .make-mine{
+      min-height:48px;
+    }
+    .font-card{align-items:center;}
+    .share-row input{min-height:48px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>✦ 명함 메이커</h1>
+  <p>정보를 입력하고 스타일을 골라 나만의 명함을 만드세요</p>
+</header>
+
+<main>
+  <!-- 입력 패널 (만들기 모드 전용) -->
+  <section id="panel">
+    <h2>명함 정보 입력</h2>
+
+    <div class="field">
+      <label for="f-name">이름<span class="req">*</span></label>
+      <input type="text" id="f-name" placeholder="홍길동" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="f-title">직함</label>
+      <input type="text" id="f-title" placeholder="대표이사" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="f-company">회사명</label>
+      <input type="text" id="f-company" placeholder="우리회사" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="f-phone">전화번호</label>
+      <input type="tel" id="f-phone" placeholder="010-1234-5678" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="f-email">이메일</label>
+      <input type="email" id="f-email" placeholder="hello@company.com" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="f-address">주소</label>
+      <input type="text" id="f-address" placeholder="서울시 강남구 테헤란로 123" autocomplete="off">
+    </div>
+
+    <!-- 회사 로고 (선택) -->
+    <div class="field">
+      <label for="logoInput">회사 로고 (선택)</label>
+
+      <div id="drop" class="drop" tabindex="0" role="button">
+        로고를 여기에 끌어놓거나 클릭
+        <span class="hint">JPG · PNG · SVG / 최대 2MB</span>
+      </div>
+
+      <div id="logoPreview" class="logo-preview hidden">
+        <img id="logoThumb" alt="로고 미리보기">
+        <div class="meta" id="logoMeta"></div>
+        <button type="button" class="btn-del" id="logoDel">삭제</button>
+      </div>
+
+      <div id="logoErr" class="err hidden"></div>
+
+      <input type="file" id="logoInput" class="hidden"
+             accept="image/jpeg,image/png,image/svg+xml">
+    </div>
+
+    <!-- 명함 스타일 -->
+    <div class="divider"></div>
+    <h2>명함 스타일</h2>
+    <div id="styleList"></div>
+
+    <!-- 글꼴 -->
+    <div class="divider"></div>
+    <h2>글꼴</h2>
+    <div id="fontList"></div>
+  </section>
+
+  <!-- 명함 미리보기 -->
+  <section id="stage">
+    <div class="stage-label">MY BUSINESS CARD</div>
+
+    <div id="cardBox">
+      <div id="card">
+        <div class="card-top">
+          <div class="txt">
+            <div class="c-name" id="c-name">홍길동</div>
+            <div class="c-sub">
+              <span id="c-title">대표이사</span>
+              <span class="dot" id="c-dot"></span>
+              <span class="c-company" id="c-company">우리회사</span>
+            </div>
+          </div>
+          <img id="c-logo" class="c-logo hidden" alt="회사 로고">
+        </div>
+        <div class="card-bottom">
+          <div class="rows">
+            <div class="c-row" id="row-phone">
+              <span class="ic">✆</span><span class="tx" id="c-phone">010-1234-5678</span>
+            </div>
+            <div class="c-row" id="row-email">
+              <span class="ic">✉</span><span class="tx" id="c-email">hello@company.com</span>
+            </div>
+            <div class="c-row" id="row-address">
+              <span class="ic">⌖</span><span class="tx" id="c-address">서울시 강남구 테헤란로 123</span>
+            </div>
+          </div>
+          <div class="c-qr" id="qrBox"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 저장 / 공유 (만들기 모드 전용) -->
+    <div id="createActions">
+      <div class="btn-row">
+        <button type="button" id="saveBtn" class="btn-save">💾 명함 저장하기</button>
+        <button type="button" id="pngBtn" class="btn-png">📥 PNG 다운로드</button>
+      </div>
+      <div id="saveMsg" class="save-msg hidden"></div>
+
+      <div id="shareResult" class="share-box hidden">
+        <div class="share-ok">✓ 저장되었습니다!</div>
+        <div class="share-label">내 명함 링크</div>
+        <div class="share-row">
+          <input type="text" id="shareLink" readonly>
+          <button type="button" id="copyBtn" class="btn-copy">복사</button>
+        </div>
+        <div class="share-hint">이 링크를 공유하면 누구나 내 명함을 볼 수 있습니다</div>
+      </div>
+    </div>
+
+    <!-- 보기 모드 상태 메시지 -->
+    <div id="status" class="hidden"></div>
+
+    <!-- 보기 모드 하단 링크 -->
+    <a id="makeMine" class="make-mine hidden" href="./">나도 명함 만들기 →</a>
+  </section>
+</main>
+
+<script>
+/* ───────── Supabase 설정 ───────── */
+const SUPABASE_URL = 'https://dqbzduztvsbfrcatcqoe.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_mylivEhgAsO8CqCRdagGvg_x4KdKM0d';
+const TABLE_NAME   = 'namecards';
+
+// CDN 로딩 실패 시에도 만들기 모드는 계속 동작하도록 방어
+const sb = window.supabase
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+
+/* ───────── 예시 데이터 ───────── */
+const SAMPLE = {
+  name:    '홍길동',
+  title:   '대표이사',
+  company: '우리회사',
+  phone:   '010-1234-5678',
+  email:   'hello@company.com',
+  address: '서울시 강남구 테헤란로 123'
+};
+
+/* ───────── DOM 참조 ───────── */
+const inputs = {
+  name:    document.getElementById('f-name'),
+  title:   document.getElementById('f-title'),
+  company: document.getElementById('f-company'),
+  phone:   document.getElementById('f-phone'),
+  email:   document.getElementById('f-email'),
+  address: document.getElementById('f-address')
+};
+const out = {
+  name:    document.getElementById('c-name'),
+  title:   document.getElementById('c-title'),
+  company: document.getElementById('c-company'),
+  phone:   document.getElementById('c-phone'),
+  email:   document.getElementById('c-email'),
+  address: document.getElementById('c-address')
+};
+const rows = {
+  phone:   document.getElementById('row-phone'),
+  email:   document.getElementById('row-email'),
+  address: document.getElementById('row-address')
+};
+const dot      = document.getElementById('c-dot');
+const cardEl   = document.getElementById('card');
+const cardBox  = document.getElementById('cardBox');
+const statusEl = document.getElementById('status');
+
+const cardLogo    = document.getElementById('c-logo');
+const qrBox       = document.getElementById('qrBox');
+const dropZone    = document.getElementById('drop');
+const logoInput   = document.getElementById('logoInput');
+const logoPreview = document.getElementById('logoPreview');
+const logoThumb   = document.getElementById('logoThumb');
+const logoMeta    = document.getElementById('logoMeta');
+const logoDel     = document.getElementById('logoDel');
+const logoErr     = document.getElementById('logoErr');
+
+/* ───────── QR (vCard) ───────── */
+
+// 마지막으로 그린 명함 데이터 — 스타일이 바뀌면 이 값으로 QR을 다시 만든다
+let lastCardData = SAMPLE;
+
+// vCard 특수문자 이스케이프 (\ ; , 개행)
+function esc(v){
+  return String(v || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g,  '\\;')
+    .replace(/,/g,  '\\,')
+    .replace(/\r?\n/g, '\\n');
+}
+
+function buildVCard(d){
+  const lines = ['BEGIN:VCARD', 'VERSION:3.0'];
+
+  if (d.name){
+    lines.push('N:' + esc(d.name));
+    lines.push('FN:' + esc(d.name));      // 폰 연락처 앱이 표시 이름으로 쓰는 항목
+  }
+  if (d.company) lines.push('ORG:'   + esc(d.company));
+  if (d.title)   lines.push('TITLE:' + esc(d.title));
+  if (d.phone)   lines.push('TEL:'   + esc(d.phone));
+  if (d.email)   lines.push('EMAIL:' + esc(d.email));
+  if (d.address) lines.push('ADR:'   + esc(d.address));
+
+  lines.push('END:VCARD');
+  return lines.join('\r\n');
+}
+
+function updateQR(data){
+  if (!window.QRCode) return;             // CDN 로딩 실패 시 조용히 통과
+
+  const hasInfo = !!(data.name || data.company || data.title ||
+                     data.phone || data.email || data.address);
+
+  qrBox.innerHTML = '';
+  qrBox.classList.toggle('hidden', !hasInfo);
+  if (!hasInfo) return;
+
+  // 스타일에 맞춘 QR 배경색 (어두운 스타일은 흰 패딩을 CSS로 덧댐)
+  const light = (currentStyle && currentStyle.qrLight) || '#FFFFFF';
+
+  // 60px로 축소해 쓰므로 4배 해상도로 그려 선명하게
+  new QRCode(qrBox, {
+    text: buildVCard(data),
+    width: 240,
+    height: 240,
+    colorDark: '#111111',
+    colorLight: light,
+    correctLevel: QRCode.CorrectLevel.L   // 모듈 수를 줄여 작게 찍혀도 인식되도록
+  });
+}
+
+/* ───────── 명함 그리기 ───────── */
+function renderCard(data){
+  lastCardData = data;
+  // 이름
+  if (data.name){
+    out.name.textContent = data.name;
+    out.name.classList.remove('empty');
+  } else {
+    out.name.textContent = '이름을 입력하세요';
+    out.name.classList.add('empty');
+  }
+
+  // 직함 · 회사명
+  out.title.textContent   = data.title   || '';
+  out.company.textContent = data.company || '';
+  out.title.classList.toggle('hidden',   !data.title);
+  out.company.classList.toggle('hidden', !data.company);
+  dot.classList.toggle('hidden', !(data.title && data.company));
+
+  // 연락처 3종 — 값이 없으면 줄 자체를 숨김
+  ['phone','email','address'].forEach(function(k){
+    out[k].textContent = data[k] || '';
+    rows[k].classList.toggle('hidden', !data[k]);
+  });
+
+  // 로고 — 없으면 자리 자체가 사라짐
+  if (data.logo){
+    cardLogo.src = data.logo;
+    cardLogo.classList.remove('hidden');
+  } else {
+    cardLogo.removeAttribute('src');
+    cardLogo.classList.add('hidden');
+  }
+
+  // 연락처가 바뀌었으니 QR도 다시 생성
+  updateQR(data);
+}
+
+/* ───────── 입력값 → 명함 (실시간) ───────── */
+function updateFromInputs(){
+  const values = {};
+  let anyFilled = false;
+
+  Object.keys(inputs).forEach(function(k){
+    const v = inputs[k].value.trim();
+    values[k] = v;
+    if (v) anyFilled = true;
+  });
+
+  // 아무것도 입력하지 않았으면 예시 데이터로 표시
+  if (!anyFilled && !logoBase64){
+    renderCard(SAMPLE);
+    return;
+  }
+  values.logo = logoBase64;
+  renderCard(values);
+}
+
+Object.keys(inputs).forEach(function(k){
+  inputs[k].addEventListener('input', updateFromInputs);
+});
+
+/* ───────── 로고 업로드 (FileReader → base64) ───────── */
+const MAX_LOGO_BYTES = 2 * 1024 * 1024;               // 2MB
+const ALLOWED_TYPES  = ['image/jpeg','image/png','image/svg+xml'];
+
+// DB(logo_base64 컬럼)에 그대로 저장할 문자열
+let logoBase64 = '';
+
+function showLogoError(msg){
+  logoErr.textContent = msg;
+  logoErr.classList.toggle('hidden', !msg);
+}
+
+function applyLogo(base64, label){
+  logoBase64 = base64 || '';
+
+  if (logoBase64){
+    logoThumb.src = logoBase64;
+    logoMeta.textContent = label || '';
+    logoPreview.classList.remove('hidden');
+    dropZone.classList.add('hidden');
+  } else {
+    logoThumb.removeAttribute('src');
+    logoMeta.textContent = '';
+    logoPreview.classList.add('hidden');
+    dropZone.classList.remove('hidden');
+  }
+
+  updateFromInputs();
+}
+
+function handleFile(file){
+  if (!file) return;
+
+  if (ALLOWED_TYPES.indexOf(file.type) === -1){
+    showLogoError('JPG · PNG · SVG 파일만 올릴 수 있습니다.');
+    return;
+  }
+  if (file.size > MAX_LOGO_BYTES){
+    showLogoError('파일이 너무 큽니다. (최대 2MB / 현재 ' +
+                  (file.size / 1024 / 1024).toFixed(1) + 'MB)');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(){
+    showLogoError('');
+    applyLogo(reader.result, file.name + ' · ' + Math.round(file.size / 1024) + 'KB');
+  };
+  reader.onerror = function(){
+    showLogoError('파일을 읽지 못했습니다. 다시 시도해 주세요.');
+  };
+  reader.readAsDataURL(file);       // 서버 업로드 없이 base64로 변환
+}
+
+// 클릭 / 키보드로 파일 선택
+dropZone.addEventListener('click', function(){ logoInput.click(); });
+dropZone.addEventListener('keydown', function(e){
+  if (e.key === 'Enter' || e.key === ' '){
+    e.preventDefault();
+    logoInput.click();
+  }
+});
+
+logoInput.addEventListener('change', function(){
+  handleFile(logoInput.files[0]);
+  logoInput.value = '';            // 같은 파일 다시 선택해도 동작하도록 초기화
+});
+
+// 끌어놓기
+['dragenter','dragover'].forEach(function(type){
+  dropZone.addEventListener(type, function(e){
+    e.preventDefault();
+    dropZone.classList.add('over');
+  });
+});
+['dragleave','dragend'].forEach(function(type){
+  dropZone.addEventListener(type, function(){
+    dropZone.classList.remove('over');
+  });
+});
+dropZone.addEventListener('drop', function(e){
+  e.preventDefault();
+  dropZone.classList.remove('over');
+  handleFile(e.dataTransfer.files[0]);
+});
+
+// 브라우저가 파일을 새 창으로 여는 기본 동작 막기
+['dragover','drop'].forEach(function(type){
+  window.addEventListener(type, function(e){ e.preventDefault(); });
+});
+
+// 삭제
+logoDel.addEventListener('click', function(){
+  showLogoError('');
+  applyLogo('', '');
+});
+
+/* ───────── 명함 스타일 5종 ───────── */
+const STYLES = [
+  {
+    name:'다크 모던',
+    qrPad:true,
+    qrLight:'#FFFFFF',
+    desc:'황금 구분선 · 로고 좌상단',
+    align:'left',
+    logo:'left',
+    vars:{
+      '--c-bg':'linear-gradient(135deg,#1E293B 0%,#334155 100%)',
+      '--c-border':'#46556d',
+      '--c-text':'#FFFFFF',
+      '--c-sub':'#CBD5E1',
+      '--c-accent':'#E8B44A',
+      '--c-row':'#E2E8F0',
+      '--c-divider':'#E8B44A',
+      '--c-bar':'#E8B44A',
+      '--c-glow':'rgba(232,180,74,.18)',
+      '--c-shadow':'0 18px 44px rgba(0,0,0,.5)'
+    }
+  },
+  {
+    name:'미니멀 화이트',
+    qrPad:false,
+    qrLight:'#FFFFFF',
+    desc:'연회색 선 · 왼쪽 정렬',
+    align:'left',
+    logo:'right',
+    vars:{
+      '--c-bg':'#FFFFFF',
+      '--c-border':'#E5E7EB',
+      '--c-text':'#333333',
+      '--c-sub':'#6B7280',
+      '--c-accent':'#4B5563',
+      '--c-row':'#555555',
+      '--c-divider':'#E5E7EB',
+      '--c-bar':'transparent',
+      '--c-glow':'transparent',
+      '--c-shadow':'0 12px 30px rgba(15,23,42,.18)'
+    }
+  },
+  {
+    name:'컬러 그라데이션',
+    qrPad:true,
+    qrLight:'#FFFFFF',
+    desc:'보라 → 인디고 · 반투명 선',
+    align:'left',
+    logo:'right',
+    vars:{
+      '--c-bg':'linear-gradient(135deg,#7C3AED 0%,#4F46E5 100%)',
+      '--c-border':'rgba(255,255,255,.22)',
+      '--c-text':'#FFFFFF',
+      '--c-sub':'#DDD6FE',
+      '--c-accent':'#F5D0FE',
+      '--c-row':'#EDE9FE',
+      '--c-divider':'rgba(255,255,255,.38)',
+      '--c-bar':'rgba(255,255,255,.65)',
+      '--c-glow':'rgba(255,255,255,.22)',
+      '--c-shadow':'0 18px 44px rgba(79,70,229,.45)'
+    }
+  },
+  {
+    name:'클래식 크림',
+    qrPad:false,
+    qrLight:'#FDF6E3',
+    desc:'갈색 선 · 중앙 정렬',
+    align:'center',
+    logo:'right',
+    vars:{
+      '--c-bg':'#FDF6E3',
+      '--c-border':'#E3D5B0',
+      '--c-text':'#78350F',
+      '--c-sub':'#92400E',
+      '--c-accent':'#B45309',
+      '--c-row':'#78350F',
+      '--c-divider':'#B45309',
+      '--c-bar':'#B45309',
+      '--c-glow':'rgba(180,83,9,.12)',
+      '--c-shadow':'0 14px 34px rgba(120,53,15,.22)'
+    }
+  },
+  {
+    name:'네이처 그린',
+    qrPad:true,
+    qrLight:'#FFFFFF',
+    desc:'딥틸 → 민트 · 자연 느낌',
+    align:'left',
+    logo:'right',
+    vars:{
+      '--c-bg':'linear-gradient(135deg,#0F766E 0%,#2DD4BF 100%)',
+      '--c-border':'rgba(255,255,255,.25)',
+      '--c-text':'#FFFFFF',
+      '--c-sub':'#D1FAE5',
+      '--c-accent':'#ECFCCB',
+      '--c-row':'#E6FFFA',
+      '--c-divider':'rgba(255,255,255,.40)',
+      '--c-bar':'#A7F3D0',
+      '--c-glow':'rgba(255,255,255,.24)',
+      '--c-shadow':'0 18px 44px rgba(15,118,110,.42)'
+    }
+  }
+];
+
+// DB(style_name 컬럼)에 저장할 값
+let styleName = STYLES[0].name;
+
+// 현재 스타일 (QR 배경색 결정에 사용)
+let currentStyle = STYLES[0];
+
+const styleList = document.getElementById('styleList');
+
+function applyStyleToCard(s){
+  Object.keys(s.vars).forEach(function(key){
+    cardEl.style.setProperty(key, s.vars[key]);
+  });
+  cardEl.classList.toggle('logo-left',   s.logo  === 'left');
+  cardEl.classList.toggle('align-center', s.align === 'center');
+  cardEl.classList.toggle('qr-pad',       s.qrPad === true);
+}
+
+function selectStyle(index){
+  const s = STYLES[index];
+  if (!s) return;
+
+  styleName    = s.name;
+  currentStyle = s;
+  applyStyleToCard(s);
+  updateQR(lastCardData);       // QR 배경색을 새 스타일에 맞춰 다시 생성
+
+  Array.prototype.forEach.call(styleList.children, function(el, i){
+    el.classList.toggle('selected', i === index);
+  });
+}
+
+// 스타일명으로 적용 (보기 모드에서 DB 값 사용)
+function applyStyleByName(name){
+  let index = 0;
+  STYLES.forEach(function(s, i){ if (s.name === name) index = i; });
+  selectStyle(index);
+}
+
+// 작은 미리보기 카드 생성
+function buildStyleList(){
+  STYLES.forEach(function(s, index){
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'style-card';
+    card.title = s.desc;
+
+    const thumb = document.createElement('div');
+    thumb.className = 'style-thumb' + (s.align === 'center' ? ' center' : '');
+    thumb.style.background = s.vars['--c-bg'];
+
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.background = s.vars['--c-bar'];
+    thumb.appendChild(bar);
+
+    const top = document.createElement('div');
+
+    const nameLine = document.createElement('div');
+    nameLine.className = 't-line t-name';
+    nameLine.style.background = s.vars['--c-text'];
+
+    const subLine = document.createElement('div');
+    subLine.className = 't-line t-sub';
+    subLine.style.background = s.vars['--c-accent'];
+
+    top.appendChild(nameLine);
+    top.appendChild(subLine);
+
+    const foot = document.createElement('div');
+    foot.className = 't-foot';
+    foot.style.borderTop = '1px solid ' + s.vars['--c-divider'];
+
+    ['t-line t-row', 't-line t-row short'].forEach(function(cls){
+      const line = document.createElement('div');
+      line.className = cls;
+      line.style.background = s.vars['--c-row'];
+      line.style.opacity = '.7';
+      foot.appendChild(line);
+    });
+
+    thumb.appendChild(top);
+    thumb.appendChild(foot);
+
+    const label = document.createElement('div');
+    label.className = 'style-name';
+
+    const check = document.createElement('span');
+    check.className = 'check';
+    check.textContent = '●';
+
+    const text = document.createElement('span');
+    text.textContent = s.name;
+
+    label.appendChild(check);
+    label.appendChild(text);
+
+    card.appendChild(thumb);
+    card.appendChild(label);
+
+    card.addEventListener('click', function(){ selectStyle(index); });
+
+    styleList.appendChild(card);
+  });
+}
+
+/* ───────── 글꼴 5종 ───────── */
+const FALLBACK = "'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif";
+
+const FONTS = [
+  { name:'Pretendard',     desc:'기본 · 모던 산세리프', stack:"'Pretendard'," + FALLBACK },
+  { name:'Noto Sans KR',   desc:'기본 고딕',           stack:"'Noto Sans KR'," + FALLBACK },
+  { name:'Noto Serif KR',  desc:'명조체',              stack:"'Noto Serif KR','Batang','바탕',serif" },
+  { name:'Gothic A1',      desc:'둥근 고딕',           stack:"'Gothic A1'," + FALLBACK },
+  { name:'Black Han Sans', desc:'굵은 제목체',         stack:"'Black Han Sans'," + FALLBACK }
+];
+
+// DB(font_name 컬럼)에 저장할 값
+let fontName = FONTS[0].name;
+
+const fontList = document.getElementById('fontList');
+
+// 글꼴은 font-family만 건드림 — 색은 스타일(STYLES)이 관리
+function applyFontToCard(f){
+  cardEl.style.fontFamily = f.stack;
+}
+
+function selectFont(index){
+  const f = FONTS[index];
+  if (!f) return;
+
+  fontName = f.name;
+  applyFontToCard(f);
+
+  Array.prototype.forEach.call(fontList.children, function(el, i){
+    el.classList.toggle('selected', i === index);
+  });
+}
+
+// 글꼴명으로 적용 (보기 모드에서 DB 값 사용)
+function applyFontByName(name){
+  let index = 0;
+  FONTS.forEach(function(f, i){ if (f.name === name) index = i; });
+  selectFont(index);
+}
+
+// 각 버튼을 해당 서체로 표시
+function buildFontList(){
+  FONTS.forEach(function(f, index){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'font-card';
+    btn.style.fontFamily = f.stack;      // 버튼 자체가 그 글꼴로 보이도록
+    btn.title = f.desc;
+
+    const nm = document.createElement('span');
+    nm.className = 'fname';
+    nm.textContent = f.name;
+
+    const sample = document.createElement('span');
+    sample.className = 'fsample';
+    sample.textContent = '가나다 홍길동 · ' + f.desc;
+
+    btn.appendChild(nm);
+    btn.appendChild(sample);
+
+    btn.addEventListener('click', function(){ selectFont(index); });
+
+    fontList.appendChild(btn);
+  });
+}
+
+/* ───────── 좁은 화면에서 명함 축소 ───────── */
+function fitCard(){
+  const scale = Math.min(1, cardBox.clientWidth / 450);
+  cardEl.style.transform = 'scale(' + scale + ')';
+  cardBox.style.height = (270 * scale) + 'px';
+}
+window.addEventListener('resize', fitCard);
+
+/* ───────── DB 저장 & 공유 링크 ───────── */
+const saveBtn     = document.getElementById('saveBtn');
+const saveMsg     = document.getElementById('saveMsg');
+const shareResult = document.getElementById('shareResult');
+const shareLink   = document.getElementById('shareLink');
+const copyBtn     = document.getElementById('copyBtn');
+const makeMine    = document.getElementById('makeMine');
+
+// 8자리 랜덤 share_id (영문소문자 + 숫자)
+function makeShareId(){
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let id = '';
+
+  if (window.crypto && window.crypto.getRandomValues){
+    const buf = new Uint32Array(8);
+    window.crypto.getRandomValues(buf);
+    for (let i = 0; i < 8; i++) id += chars[buf[i] % chars.length];
+  } else {
+    for (let i = 0; i < 8; i++){
+      id += chars[Math.floor(Math.random() * chars.length)];
+    }
+  }
+  return id;
+}
+
+// 현재 페이지 주소 (?id= 앞부분)
+function baseUrl(){
+  return location.href.split('#')[0].split('?')[0];
+}
+
+function showSaveMsg(text){
+  saveMsg.textContent = text;
+  saveMsg.classList.toggle('hidden', !text);
+}
+
+async function saveCard(){
+  const name = inputs.name.value.trim();
+
+  // 이름은 필수
+  if (!name){
+    shareResult.classList.add('hidden');
+    showSaveMsg('이름을 입력해 주세요');
+    inputs.name.focus();
+    return;
+  }
+
+  if (!sb){
+    showSaveMsg('Supabase에 연결할 수 없습니다. 네트워크를 확인해 주세요.');
+    return;
+  }
+
+  showSaveMsg('');
+  shareResult.classList.add('hidden');
+  saveBtn.disabled = true;
+  saveBtn.textContent = '저장 중…';
+
+  try {
+    let shareId = '';
+    let lastError = null;
+
+    // share_id가 겹치면(UNIQUE 위반) 최대 3번까지 다시 시도
+    for (let attempt = 0; attempt < 3; attempt++){
+      shareId = makeShareId();
+
+      const { error } = await sb.from(TABLE_NAME).insert({
+        share_id:       shareId,
+        name:           name,
+        title_position: inputs.title.value.trim(),
+        company:        inputs.company.value.trim(),
+        phone:          inputs.phone.value.trim(),
+        email:          inputs.email.value.trim(),
+        address:        inputs.address.value.trim(),
+        logo_base64:    logoBase64,
+        style_name:     styleName,
+        font_name:      fontName
+      });
+
+      if (!error){ lastError = null; break; }
+
+      lastError = error;
+      if (error.code !== '23505') break;   // 중복이 아니면 재시도 의미 없음
+    }
+
+    if (lastError) throw lastError;
+
+    // 공유 링크 표시
+    shareLink.value = baseUrl() + '?id=' + shareId;
+    shareResult.classList.remove('hidden');
+    copyBtn.textContent = '복사';
+
+  } catch (e){
+    console.error(e);
+    showSaveMsg('저장에 실패했습니다: ' + (e.message || '알 수 없는 오류'));
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = '💾 명함 저장하기';
+  }
+}
+
+async function copyLink(){
+  const text = shareLink.value;
+
+  try {
+    // 보안 컨텍스트(https/localhost)에서만 동작
+    await navigator.clipboard.writeText(text);
+  } catch (e){
+    // file:// 등에서는 구식 방법으로 대체
+    shareLink.select();
+    shareLink.setSelectionRange(0, 99999);
+    try { document.execCommand('copy'); } catch (e2){ /* 무시 */ }
+  }
+
+  copyBtn.textContent = '복사됨 ✓';
+  setTimeout(function(){ copyBtn.textContent = '복사'; }, 1600);
+}
+
+saveBtn.addEventListener('click', saveCard);
+copyBtn.addEventListener('click', copyLink);
+
+/* ───────── PNG 다운로드 (html2canvas) ───────── */
+const pngBtn = document.getElementById('pngBtn');
+
+// 파일명에 못 쓰는 문자 제거
+function safeFilePart(v){
+  return String(v || '').replace(/[\\/:*?"<>|]/g, '').trim();
+}
+
+function pngFileName(){
+  const name = safeFilePart(lastCardData.name) || '명함';
+  return '명함_' + name + '_' + safeFilePart(styleName) + '.png';
+}
+
+async function downloadPNG(){
+  if (!window.html2canvas){
+    showSaveMsg('이미지 라이브러리를 불러오지 못했습니다. 네트워크를 확인해 주세요.');
+    return;
+  }
+
+  showSaveMsg('');
+  pngBtn.disabled = true;
+  pngBtn.textContent = '생성 중…';
+
+  // 좁은 화면에서 걸어둔 축소(transform)를 잠시 풀고 원본 크기로 캡처
+  const prevTransform = cardEl.style.transform;
+  cardEl.style.transform = 'none';
+
+  try {
+    const canvas = await html2canvas(cardEl, {
+      scale: 2,                 // 900 × 540 px
+      backgroundColor: null,    // 둥근 모서리 바깥은 투명하게
+      useCORS: true,
+      logging: false
+    });
+
+    const link = document.createElement('a');
+    link.download = pngFileName();
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+  } catch (e){
+    console.error(e);
+    showSaveMsg('이미지 생성에 실패했습니다: ' + (e.message || '알 수 없는 오류'));
+  } finally {
+    cardEl.style.transform = prevTransform;
+    pngBtn.disabled = false;
+    pngBtn.textContent = '📥 PNG 다운로드';
+  }
+}
+
+pngBtn.addEventListener('click', downloadPNG);
+
+/* ───────── 보기 모드 ───────── */
+function showStatus(icon, msg, sub){
+  cardBox.classList.add('hidden');
+  statusEl.classList.remove('hidden');
+  statusEl.innerHTML = '';
+
+  const big = document.createElement('span');
+  big.className = 'big';
+  big.textContent = icon;
+
+  const m = document.createElement('div');
+  m.className = 'msg';
+  m.textContent = msg;
+
+  statusEl.appendChild(big);
+  statusEl.appendChild(m);
+
+  if (sub){
+    const s = document.createElement('div');
+    s.textContent = sub;
+    statusEl.appendChild(s);
+  }
+}
+
+async function loadCard(shareId){
+  document.body.classList.add('view-mode');
+  showStatus('⏳', '명함을 불러오는 중…', '');
+
+  // 하단 "나도 명함 만들기" 링크
+  makeMine.href = baseUrl();
+  makeMine.classList.remove('hidden');
+
+  try {
+    if (!sb) throw new Error('Supabase 라이브러리를 불러오지 못했습니다.');
+
+    const { data, error } = await sb
+      .from(TABLE_NAME)
+      .select('*')
+      .eq('share_id', shareId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data){
+      showStatus('🔍', '명함을 찾을 수 없습니다', 'id: ' + shareId);
+      return;
+    }
+
+    // DB 컬럼 → 명함 필드
+    renderCard({
+      name:    data.name           || '',
+      title:   data.title_position || '',
+      company: data.company        || '',
+      phone:   data.phone          || '',
+      email:   data.email          || '',
+      address: data.address        || '',
+      logo:    data.logo_base64    || ''
+    });
+
+    applyStyleByName(data.style_name);
+    applyFontByName(data.font_name);
+
+    statusEl.classList.add('hidden');
+    cardBox.classList.remove('hidden');
+    fitCard();
+
+  } catch (e){
+    console.error(e);
+    showStatus('🔍', '명함을 찾을 수 없습니다', e.message || '');
+  }
+}
+
+/* ───────── 시작 ───────── */
+const shareId = new URLSearchParams(location.search).get('id');
+
+buildStyleList();
+selectStyle(0);                 // 기본 선택: 다크 모던
+
+buildFontList();
+selectFont(0);                  // 기본 선택: Pretendard
+
+if (shareId){
+  loadCard(shareId);          // 보기 모드
+} else {
+  updateFromInputs();         // 만들기 모드
+  fitCard();
+}
+</script>
+
+</body>
+</html>

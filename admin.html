@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✦ 명함 관리자</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- qrcode.min.js(압축본)는 한글 인코딩 버그가 있어 같은 버전의 비압축본을 사용 -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.js"></script>
+
+<link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gothic+A1:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&family=Noto+Serif+KR:wght@400;700;900&display=swap">
+<style>
+  :root{
+    --bg:#0d1117;
+    --bg-soft:#161b22;
+    --line:#262c36;
+    --text:#e6edf3;
+    --muted:#8b949e;
+    --accent:#6ea8fe;
+    --accent-2:#a78bfa;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Pretendard','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,
+                'Malgun Gothic','맑은 고딕',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ── 헤더 ── */
+  header{
+    padding:26px 24px 22px;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+    background:var(--bg-soft);
+  }
+  header h1{
+    font-size:24px;
+    font-weight:800;
+    letter-spacing:-0.5px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  header p{margin-top:8px;font-size:14px;color:var(--muted);}
+  .head-links{
+    margin-top:14px;
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .hbtn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:40px;
+    padding:8px 16px;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    background:#0d1117;
+    border:1px solid var(--line);
+    border-radius:9px;
+    text-decoration:none;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .hbtn:hover{border-color:var(--accent);background:rgba(110,168,254,.08);}
+
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 24px 70px;
+  }
+  section.block{
+    background:var(--bg-soft);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:22px;
+    margin-bottom:24px;
+  }
+  section.block > h2{
+    font-size:16px;
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  section.block > .sub{
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:18px;
+  }
+
+  /* ── 요약 숫자 ── */
+  #summary{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:12px;
+  }
+  .stat{
+    padding:16px;
+    border:1px solid var(--line);
+    border-radius:11px;
+    background:#0d1117;
+  }
+  .stat .k{font-size:12px;color:var(--muted);margin-bottom:7px;}
+  .stat .v{font-size:24px;font-weight:800;letter-spacing:-0.5px;}
+  .stat .v small{font-size:13px;font-weight:600;color:var(--muted);margin-left:3px;}
+
+  /* ── 스타일별 통계 그래프 ── */
+  .bar-row{
+    display:grid;
+    grid-template-columns:120px 1fr 92px;
+    align-items:center;
+    gap:12px;
+    margin-bottom:11px;
+  }
+  .bar-row:last-child{margin-bottom:0;}
+  .bar-label{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:13px;
+    font-weight:600;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .bar-label .swatch{
+    width:12px;height:12px;
+    flex:0 0 12px;
+    border-radius:3px;
+    border:1px solid rgba(255,255,255,.18);
+  }
+  .bar-track{
+    height:22px;
+    border-radius:6px;
+    background:#0d1117;
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;
+    border-radius:5px 0 0 5px;
+    min-width:2px;
+    transition:width .5s ease;
+  }
+  .bar-value{
+    font-size:12.5px;
+    color:var(--muted);
+    text-align:right;
+    white-space:nowrap;
+  }
+  .bar-value b{color:var(--text);font-size:14px;}
+
+  /* ── 갤러리 ── */
+  #gallery{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+    gap:22px;
+  }
+  .g-item{
+    border:1px solid var(--line);
+    border-radius:13px;
+    background:#0d1117;
+    overflow:hidden;
+  }
+  .g-cardwrap{
+    padding:16px 16px 0;
+    display:flex;
+    justify-content:center;
+  }
+  .g-scaler{
+    position:relative;
+    width:100%;
+    overflow:hidden;
+  }
+  .g-meta{
+    padding:14px 16px 16px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .g-info{flex:1;min-width:0;}
+  .g-name{
+    font-size:14px;
+    font-weight:700;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .g-date{
+    margin-top:3px;
+    font-size:11.5px;
+    color:var(--muted);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .g-open{
+    flex:0 0 auto;
+    display:inline-flex;
+    align-items:center;
+    min-height:36px;
+    padding:7px 13px;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--accent);
+    text-decoration:none;
+    border:1px solid var(--line);
+    border-radius:8px;
+    transition:border-color .15s, background .15s;
+  }
+  .g-open:hover{border-color:var(--accent);background:rgba(110,168,254,.08);}
+  .g-tags{
+    display:flex;
+    gap:5px;
+    flex-wrap:wrap;
+    padding:0 16px 14px;
+  }
+  .tag{
+    font-size:11px;
+    color:var(--muted);
+    padding:3px 8px;
+    border:1px solid var(--line);
+    border-radius:20px;
+  }
+
+  #more{
+    display:block;
+    width:100%;
+    max-width:280px;
+    margin:24px auto 0;
+    min-height:48px;
+    padding:13px;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:700;
+    color:var(--text);
+    background:#0d1117;
+    border:1px solid var(--line);
+    border-radius:11px;
+    cursor:pointer;
+  }
+  #more:hover{border-color:var(--accent);}
+
+  .note{
+    text-align:center;
+    padding:44px 20px;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .note .big{display:block;font-size:32px;margin-bottom:12px;}
+  .note .msg{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px;}
+  .hidden{display:none !important;}
+
+  /* ── 명함 (index.html과 동일한 구조 / 색은 스타일 변수) ── */
+  .card{
+    width:450px;
+    height:270px;
+    flex:0 0 auto;
+    transform-origin:top left;
+    position:relative;
+    overflow:hidden;
+    border-radius:16px;
+    padding:32px 34px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    background:var(--c-bg);
+    color:var(--c-text);
+    border:1px solid var(--c-border);
+  }
+  .card::before{
+    content:'';
+    position:absolute;
+    left:0;top:0;bottom:0;
+    width:5px;
+    background:var(--c-bar);
+  }
+  .card::after{
+    content:'';
+    position:absolute;
+    right:-70px;top:-70px;
+    width:200px;height:200px;
+    border-radius:50%;
+    background:radial-gradient(circle,var(--c-glow),transparent 70%);
+  }
+  .card-top{
+    position:relative;z-index:1;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+  }
+  .card-top .txt{flex:1;min-width:0;}
+  .card.logo-left .c-logo{order:-1;}
+  .card.align-center .card-top{flex-direction:column;align-items:center;gap:10px;}
+  .card.align-center .txt{flex:none;text-align:center;width:100%;}
+  .card.align-center .c-sub{justify-content:center;}
+  .card.align-center .card-bottom .rows{align-items:center;}
+  .c-logo{width:56px;height:56px;flex:0 0 56px;object-fit:contain;border-radius:8px;}
+  .c-name{font-size:29px;font-weight:800;letter-spacing:-0.6px;line-height:1.2;}
+  .c-sub{
+    margin-top:9px;font-size:14px;color:var(--c-sub);
+    display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  }
+  .c-sub .dot{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.6;flex:0 0 auto;}
+  .c-company{color:var(--c-accent);font-weight:600;}
+  .card-bottom{
+    position:relative;z-index:1;
+    border-top:1px solid var(--c-divider);
+    padding-top:14px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .card-bottom .rows{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
+  .c-qr{flex:0 0 auto;width:60px;height:60px;line-height:0;border-radius:3px;}
+  .c-qr img,.c-qr canvas{width:60px !important;height:60px !important;display:block;}
+  .card.qr-pad .c-qr{width:68px;height:68px;padding:4px;background:#fff;border-radius:5px;}
+  .c-row{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--c-row);line-height:1.45;}
+  .c-row .ic{width:14px;flex:0 0 14px;text-align:center;font-size:11px;color:var(--c-accent);}
+  .c-row .tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  @media (max-width:700px){
+    main{padding:20px 16px 56px;}
+    section.block{padding:18px;}
+    .bar-row{grid-template-columns:98px 1fr 78px;gap:9px;}
+    .bar-label{font-size:12px;}
+    #gallery{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>✦ 명함 관리자</h1>
+  <p>저장된 명함 통계와 갤러리</p>
+  <div class="head-links">
+    <a class="hbtn" href="./index.html">← 명함 만들기</a>
+    <button type="button" class="hbtn" id="reloadBtn">↻ 새로고침</button>
+  </div>
+</header>
+
+<main>
+  <!-- 로딩 / 오류 -->
+  <div id="note" class="note">
+    <span class="big">⏳</span>
+    <div class="msg">불러오는 중…</div>
+  </div>
+
+  <div id="content" class="hidden">
+    <!-- 요약 -->
+    <section class="block">
+      <h2>요약</h2>
+      <div class="sub">namecards 테이블 기준</div>
+      <div id="summary"></div>
+    </section>
+
+    <!-- 스타일별 통계 -->
+    <section class="block">
+      <h2>스타일별 통계</h2>
+      <div class="sub" id="chartSub"></div>
+      <div id="chart"></div>
+    </section>
+
+    <!-- 갤러리 -->
+    <section class="block">
+      <h2>명함 갤러리</h2>
+      <div class="sub" id="gallerySub"></div>
+      <div id="gallery"></div>
+      <button type="button" id="more" class="hidden">더 보기</button>
+    </section>
+  </div>
+</main>
+
+<script>
+/* ───────── Supabase ───────── */
+const SUPABASE_URL = 'https://dqbzduztvsbfrcatcqoe.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_mylivEhgAsO8CqCRdagGvg_x4KdKM0d';
+const TABLE_NAME   = 'namecards';
+
+const sb = window.supabase
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+
+const PAGE_SIZE  = 24;    // 갤러리에서 한 번에 그리는 개수
+const FETCH_LIMIT = 300;  // 한 번에 읽어오는 최대 행 수
+
+/* ───────── 스타일 / 글꼴 (index.html과 동일) ───────── */
+const STYLES = [
+  { name:'다크 모던', align:'left', logo:'left', qrPad:true, qrLight:'#FFFFFF',
+    vars:{'--c-bg':'linear-gradient(135deg,#1E293B 0%,#334155 100%)','--c-border':'#46556d',
+          '--c-text':'#FFFFFF','--c-sub':'#CBD5E1','--c-accent':'#E8B44A','--c-row':'#E2E8F0',
+          '--c-divider':'#E8B44A','--c-bar':'#E8B44A','--c-glow':'rgba(232,180,74,.18)'} },
+  { name:'미니멀 화이트', align:'left', logo:'right', qrPad:false, qrLight:'#FFFFFF',
+    vars:{'--c-bg':'#FFFFFF','--c-border':'#E5E7EB','--c-text':'#333333','--c-sub':'#6B7280',
+          '--c-accent':'#4B5563','--c-row':'#555555','--c-divider':'#E5E7EB',
+          '--c-bar':'transparent','--c-glow':'transparent'} },
+  { name:'컬러 그라데이션', align:'left', logo:'right', qrPad:true, qrLight:'#FFFFFF',
+    vars:{'--c-bg':'linear-gradient(135deg,#7C3AED 0%,#4F46E5 100%)','--c-border':'rgba(255,255,255,.22)',
+          '--c-text':'#FFFFFF','--c-sub':'#DDD6FE','--c-accent':'#F5D0FE','--c-row':'#EDE9FE',
+          '--c-divider':'rgba(255,255,255,.38)','--c-bar':'rgba(255,255,255,.65)',
+          '--c-glow':'rgba(255,255,255,.22)'} },
+  { name:'클래식 크림', align:'center', logo:'right', qrPad:false, qrLight:'#FDF6E3',
+    vars:{'--c-bg':'#FDF6E3','--c-border':'#E3D5B0','--c-text':'#78350F','--c-sub':'#92400E',
+          '--c-accent':'#B45309','--c-row':'#78350F','--c-divider':'#B45309',
+          '--c-bar':'#B45309','--c-glow':'rgba(180,83,9,.12)'} },
+  { name:'네이처 그린', align:'left', logo:'right', qrPad:true, qrLight:'#FFFFFF',
+    vars:{'--c-bg':'linear-gradient(135deg,#0F766E 0%,#2DD4BF 100%)','--c-border':'rgba(255,255,255,.25)',
+          '--c-text':'#FFFFFF','--c-sub':'#D1FAE5','--c-accent':'#ECFCCB','--c-row':'#E6FFFA',
+          '--c-divider':'rgba(255,255,255,.40)','--c-bar':'#A7F3D0','--c-glow':'rgba(255,255,255,.24)'} }
+];
+
+const FALLBACK = "'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif";
+const FONTS = [
+  { name:'Pretendard',     stack:"'Pretendard'," + FALLBACK },
+  { name:'Noto Sans KR',   stack:"'Noto Sans KR'," + FALLBACK },
+  { name:'Noto Serif KR',  stack:"'Noto Serif KR','Batang','바탕',serif" },
+  { name:'Gothic A1',      stack:"'Gothic A1'," + FALLBACK },
+  { name:'Black Han Sans', stack:"'Black Han Sans'," + FALLBACK }
+];
+
+function findStyle(name){
+  for (let i = 0; i < STYLES.length; i++){
+    if (STYLES[i].name === name) return STYLES[i];
+  }
+  return STYLES[0];
+}
+function findFont(name){
+  for (let i = 0; i < FONTS.length; i++){
+    if (FONTS[i].name === name) return FONTS[i];
+  }
+  return FONTS[0];
+}
+
+/* ───────── vCard (QR용) ───────── */
+function esc(v){
+  return String(v || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g,  '\\;')
+    .replace(/,/g,  '\\,')
+    .replace(/\r?\n/g, '\\n');
+}
+function buildVCard(d){
+  const lines = ['BEGIN:VCARD', 'VERSION:3.0'];
+  if (d.name){
+    lines.push('N:' + esc(d.name));
+    lines.push('FN:' + esc(d.name));
+  }
+  if (d.company) lines.push('ORG:'   + esc(d.company));
+  if (d.title)   lines.push('TITLE:' + esc(d.title));
+  if (d.phone)   lines.push('TEL:'   + esc(d.phone));
+  if (d.email)   lines.push('EMAIL:' + esc(d.email));
+  if (d.address) lines.push('ADR:'   + esc(d.address));
+  lines.push('END:VCARD');
+  return lines.join('\r\n');
+}
+
+/* ───────── DOM ───────── */
+const noteEl     = document.getElementById('note');
+const contentEl  = document.getElementById('content');
+const summaryEl  = document.getElementById('summary');
+const chartEl    = document.getElementById('chart');
+const chartSub   = document.getElementById('chartSub');
+const galleryEl  = document.getElementById('gallery');
+const gallerySub = document.getElementById('gallerySub');
+const moreBtn    = document.getElementById('more');
+const reloadBtn  = document.getElementById('reloadBtn');
+
+let rows = [];        // 불러온 전체 행 (최신순)
+let shown = 0;        // 갤러리에 그린 개수
+
+function showNote(icon, msg, sub){
+  contentEl.classList.add('hidden');
+  noteEl.classList.remove('hidden');
+  noteEl.innerHTML = '';
+
+  const big = document.createElement('span');
+  big.className = 'big';
+  big.textContent = icon;
+
+  const m = document.createElement('div');
+  m.className = 'msg';
+  m.textContent = msg;
+
+  noteEl.appendChild(big);
+  noteEl.appendChild(m);
+
+  if (sub){
+    const s = document.createElement('div');
+    s.textContent = sub;
+    noteEl.appendChild(s);
+  }
+}
+
+function fmtDate(v){
+  if (!v) return '날짜 없음';
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return String(v);
+  const p = function(n){ return String(n).padStart(2, '0'); };
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) +
+         ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+/* ───────── 요약 ───────── */
+function renderSummary(){
+  const styleSet = {};
+  const fontSet  = {};
+  let withLogo = 0;
+
+  rows.forEach(function(r){
+    styleSet[r.style_name || '(없음)'] = 1;
+    fontSet[r.font_name || '(없음)'] = 1;
+    if (r.logo_base64) withLogo++;
+  });
+
+  const items = [
+    ['전체 명함', rows.length, '개'],
+    ['사용된 스타일', Object.keys(styleSet).length, '종'],
+    ['사용된 글꼴', Object.keys(fontSet).length, '종'],
+    ['로고 있음', withLogo, '개'],
+    ['최근 생성', rows.length ? fmtDate(rows[0].created_at) : '-', '']
+  ];
+
+  summaryEl.innerHTML = '';
+  items.forEach(function(it){
+    const box = document.createElement('div');
+    box.className = 'stat';
+
+    const k = document.createElement('div');
+    k.className = 'k';
+    k.textContent = it[0];
+
+    const v = document.createElement('div');
+    v.className = 'v';
+    v.textContent = it[1];
+
+    if (it[2]){
+      const small = document.createElement('small');
+      small.textContent = it[2];
+      v.appendChild(small);
+    }
+    if (it[0] === '최근 생성') v.style.fontSize = '15px';
+
+    box.appendChild(k);
+    box.appendChild(v);
+    summaryEl.appendChild(box);
+  });
+}
+
+/* ───────── 스타일별 통계 그래프 ───────── */
+function renderChart(){
+  // 5개 스타일 + DB에만 있는 이름(기타)까지 모두 집계
+  const counts = {};
+  STYLES.forEach(function(s){ counts[s.name] = 0; });
+
+  rows.forEach(function(r){
+    const key = r.style_name || '(없음)';
+    counts[key] = (counts[key] || 0) + 1;
+  });
+
+  const list = Object.keys(counts).map(function(name){
+    return { name: name, count: counts[name] };
+  });
+  list.sort(function(a, b){ return b.count - a.count || a.name.localeCompare(b.name); });
+
+  const total = rows.length;
+  const max   = list.reduce(function(m, x){ return Math.max(m, x.count); }, 0);
+
+  chartSub.textContent = '전체 ' + total + '개 · 막대 길이는 가장 많은 스타일 기준';
+  chartEl.innerHTML = '';
+
+  list.forEach(function(item){
+    const known = findStyle(item.name);
+    const isKnown = known.name === item.name;
+
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+
+    // 라벨 + 색 견본
+    const label = document.createElement('div');
+    label.className = 'bar-label';
+    const sw = document.createElement('span');
+    sw.className = 'swatch';
+    sw.style.background = isKnown ? known.vars['--c-bg'] : '#30363d';
+    const lname = document.createElement('span');
+    lname.textContent = item.name;
+    label.appendChild(sw);
+    label.appendChild(lname);
+
+    // 막대
+    const track = document.createElement('div');
+    track.className = 'bar-track';
+    const fill = document.createElement('div');
+    fill.className = 'bar-fill';
+    fill.style.width = (max ? (item.count / max * 100) : 0) + '%';
+    fill.style.background = isKnown ? known.vars['--c-accent'] : '#484f58';
+    track.appendChild(fill);
+
+    // 값
+    const val = document.createElement('div');
+    val.className = 'bar-value';
+    const b = document.createElement('b');
+    b.textContent = item.count;
+    val.appendChild(b);
+    val.appendChild(document.createTextNode(
+      '개 · ' + (total ? Math.round(item.count / total * 100) : 0) + '%'
+    ));
+
+    row.appendChild(label);
+    row.appendChild(track);
+    row.appendChild(val);
+    chartEl.appendChild(row);
+  });
+}
+
+/* ───────── 명함 한 장 그리기 ───────── */
+function buildCard(row){
+  const style = findStyle(row.style_name);
+  const font  = findFont(row.font_name);
+
+  const data = {
+    name:    row.name           || '',
+    title:   row.title_position || '',
+    company: row.company        || '',
+    phone:   row.phone          || '',
+    email:   row.email          || '',
+    address: row.address        || '',
+    logo:    row.logo_base64    || ''
+  };
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  Object.keys(style.vars).forEach(function(k){
+    card.style.setProperty(k, style.vars[k]);
+  });
+  if (style.logo  === 'left')   card.classList.add('logo-left');
+  if (style.align === 'center') card.classList.add('align-center');
+  if (style.qrPad)              card.classList.add('qr-pad');
+  card.style.fontFamily = font.stack;
+
+  // 위쪽 — 이름 / 직함 · 회사 / 로고
+  const top = document.createElement('div');
+  top.className = 'card-top';
+
+  const txt = document.createElement('div');
+  txt.className = 'txt';
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'c-name';
+  nameEl.textContent = data.name || '(이름 없음)';
+
+  const sub = document.createElement('div');
+  sub.className = 'c-sub';
+  if (data.title){
+    const t = document.createElement('span');
+    t.textContent = data.title;
+    sub.appendChild(t);
+  }
+  if (data.title && data.company){
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+    sub.appendChild(dot);
+  }
+  if (data.company){
+    const c = document.createElement('span');
+    c.className = 'c-company';
+    c.textContent = data.company;
+    sub.appendChild(c);
+  }
+
+  txt.appendChild(nameEl);
+  txt.appendChild(sub);
+  top.appendChild(txt);
+
+  if (data.logo){
+    const img = document.createElement('img');
+    img.className = 'c-logo';
+    img.alt = '';
+    img.src = data.logo;
+    top.appendChild(img);
+  }
+
+  // 아래쪽 — 연락처 + QR
+  const bottom = document.createElement('div');
+  bottom.className = 'card-bottom';
+
+  const rowsBox = document.createElement('div');
+  rowsBox.className = 'rows';
+
+  [['✆', data.phone], ['✉', data.email], ['⌖', data.address]].forEach(function(pair){
+    if (!pair[1]) return;
+    const line = document.createElement('div');
+    line.className = 'c-row';
+    const ic = document.createElement('span');
+    ic.className = 'ic';
+    ic.textContent = pair[0];
+    const tx = document.createElement('span');
+    tx.className = 'tx';
+    tx.textContent = pair[1];
+    line.appendChild(ic);
+    line.appendChild(tx);
+    rowsBox.appendChild(line);
+  });
+
+  const qr = document.createElement('div');
+  qr.className = 'c-qr';
+
+  const hasInfo = !!(data.name || data.company || data.title ||
+                     data.phone || data.email || data.address);
+
+  if (window.QRCode && hasInfo){
+    try {
+      new QRCode(qr, {
+        text: buildVCard(data),
+        width: 180, height: 180,
+        colorDark: '#111111',
+        colorLight: style.qrLight || '#FFFFFF',
+        correctLevel: QRCode.CorrectLevel.L
+      });
+    } catch (e){
+      console.error('QR 생성 실패', row.share_id, e);
+    }
+  }
+
+  bottom.appendChild(rowsBox);
+  bottom.appendChild(qr);
+
+  card.appendChild(top);
+  card.appendChild(bottom);
+  return card;
+}
+
+/* ───────── 갤러리 ───────── */
+function renderGalleryChunk(){
+  const slice = rows.slice(shown, shown + PAGE_SIZE);
+
+  slice.forEach(function(row){
+    const item = document.createElement('div');
+    item.className = 'g-item';
+
+    // 명함 (450px 원본을 칸 너비에 맞춰 축소)
+    const wrap = document.createElement('div');
+    wrap.className = 'g-cardwrap';
+    const scaler = document.createElement('div');
+    scaler.className = 'g-scaler';
+    scaler.appendChild(buildCard(row));
+    wrap.appendChild(scaler);
+
+    // 메타
+    const meta = document.createElement('div');
+    meta.className = 'g-meta';
+
+    const info = document.createElement('div');
+    info.className = 'g-info';
+    const nm = document.createElement('div');
+    nm.className = 'g-name';
+    nm.textContent = row.name || '(이름 없음)';
+    const dt = document.createElement('div');
+    dt.className = 'g-date';
+    dt.textContent = fmtDate(row.created_at) + ' · ' + (row.share_id || '');
+    info.appendChild(nm);
+    info.appendChild(dt);
+
+    const open = document.createElement('a');
+    open.className = 'g-open';
+    open.textContent = '열기 →';
+    open.target = '_blank';
+    open.rel = 'noopener';
+    open.href = './index.html?id=' + encodeURIComponent(row.share_id || '');
+
+    meta.appendChild(info);
+    meta.appendChild(open);
+
+    // 태그
+    const tags = document.createElement('div');
+    tags.className = 'g-tags';
+    [row.style_name || '스타일 없음', row.font_name || '글꼴 없음'].forEach(function(t){
+      const el = document.createElement('span');
+      el.className = 'tag';
+      el.textContent = t;
+      tags.appendChild(el);
+    });
+    if (row.logo_base64){
+      const el = document.createElement('span');
+      el.className = 'tag';
+      el.textContent = '로고';
+      tags.appendChild(el);
+    }
+
+    item.appendChild(wrap);
+    item.appendChild(meta);
+    item.appendChild(tags);
+    galleryEl.appendChild(item);
+  });
+
+  shown += slice.length;
+
+  gallerySub.textContent = '최신순 · 전체 ' + rows.length + '개 중 ' + shown + '개 표시';
+  moreBtn.classList.toggle('hidden', shown >= rows.length);
+  moreBtn.textContent = '더 보기 (' + Math.max(0, rows.length - shown) + '개 남음)';
+
+  fitCards();
+}
+
+// 각 명함을 칸 너비에 맞춰 축소 (비율 유지)
+function fitCards(){
+  const scalers = galleryEl.querySelectorAll('.g-scaler');
+  Array.prototype.forEach.call(scalers, function(sc){
+    const card = sc.firstChild;
+    if (!card) return;
+    const scale = Math.min(1, sc.clientWidth / 450);
+    card.style.transform = 'scale(' + scale + ')';
+    sc.style.height = (270 * scale) + 'px';
+  });
+}
+window.addEventListener('resize', fitCards);
+
+/* ───────── 불러오기 ───────── */
+async function load(){
+  showNote('⏳', '불러오는 중…', '');
+
+  if (!sb){
+    showNote('⚠️', 'Supabase 라이브러리를 불러오지 못했습니다.', '네트워크를 확인해 주세요.');
+    return;
+  }
+
+  try {
+    const { data, error } = await sb
+      .from(TABLE_NAME)
+      .select('*')
+      .order('created_at', { ascending: false })   // 최신순
+      .limit(FETCH_LIMIT);
+
+    if (error) throw error;
+
+    rows = data || [];
+
+    if (!rows.length){
+      showNote('📭', '저장된 명함이 없습니다.', '명함을 만들어 저장하면 여기에 표시됩니다.');
+      return;
+    }
+
+    noteEl.classList.add('hidden');
+    contentEl.classList.remove('hidden');
+
+    galleryEl.innerHTML = '';
+    shown = 0;
+
+    renderSummary();
+    renderChart();
+    renderGalleryChunk();
+
+  } catch (e){
+    console.error(e);
+    showNote('⚠️', '불러오지 못했습니다.', e.message || '알 수 없는 오류');
+  }
+}
+
+moreBtn.addEventListener('click', renderGalleryChunk);
+reloadBtn.addEventListener('click', load);
+
+load();
+</script>
+
+</body>
+</html>

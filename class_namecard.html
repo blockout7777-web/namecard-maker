@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>디지털 명함 메이커 + DB 저장 + GitHub 배포 — 프롬프트 가이드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+:root{
+  --bg:#F4F3EF;--card:#FFFFFF;--ink:#1A1A1A;--sub:#6B6B6B;--mute:#9E9E9E;
+  --accent:#0F766E;--accent-soft:#E6F5F3;
+  --green:#0D8A53;--green-soft:#E4F5ED;
+  --orange:#C96800;--orange-soft:#FFF3E0;
+  --red:#C93636;--red-soft:#FDEAEA;
+  --purple:#7C3AED;--purple-soft:#F0EBFA;
+  --blue:#2563EB;--blue-soft:#EFF6FF;
+  --border:#E5E5E0;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Pretendard,'Pretendard Variable',-apple-system,'Malgun Gothic',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+.hero{background:linear-gradient(135deg,#042F2E 0%,#0F766E 50%,#2DD4BF 100%);color:#fff;padding:48px 24px 40px}
+.hero-inner{max-width:780px;margin:0 auto}
+.hero-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);font-size:12px;font-weight:600;letter-spacing:.06em;padding:4px 14px;border-radius:20px;margin-bottom:16px}
+.hero h1{font-size:clamp(24px,5vw,34px);font-weight:800;line-height:1.25;letter-spacing:-.02em;margin-bottom:10px}
+.hero p{font-size:15px;color:rgba(255,255,255,.75);max-width:600px}
+.nav-bar{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.nav-inner{max-width:780px;margin:0 auto;display:flex;gap:0;padding:0 24px}
+.nav-inner a{flex-shrink:0;display:block;padding:13px 14px;font-size:12.5px;font-weight:600;color:var(--sub);text-decoration:none;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
+.nav-inner a:hover,.nav-inner a.active{color:var(--accent);border-bottom-color:var(--accent)}
+.main{max-width:780px;margin:0 auto;padding:0 24px 80px}
+.section{padding-top:48px}
+.section-label{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
+.section-label .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.section-label .dot.blue{background:var(--blue)}
+.section h2{font-size:clamp(20px,4vw,26px);font-weight:800;letter-spacing:-.02em;margin-bottom:6px;line-height:1.3}
+.section .lead{font-size:14.5px;color:var(--sub);margin-bottom:28px;max-width:620px}
+.step{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;box-shadow:var(--shadow)}
+.step-header{display:flex;align-items:center;gap:14px;padding:18px 20px 14px}
+.step-num{flex-shrink:0;width:36px;height:36px;background:var(--accent);color:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+.step-num.green{background:var(--green)}.step-num.orange{background:var(--orange)}.step-num.purple{background:var(--purple)}.step-num.blue{background:var(--blue)}
+.step-header h3{font-size:15.5px;font-weight:700;line-height:1.3}
+.step-desc{padding:0 20px 16px;font-size:13.5px;color:var(--sub);line-height:1.7}
+.step-desc strong{color:var(--ink)}
+.prompt-wrap{margin:0 20px 18px;position:relative}
+.prompt-label{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--mute);margin-bottom:6px;text-transform:uppercase}
+.prompt-label svg{width:14px;height:14px;fill:var(--mute)}
+.prompt-box{background:#0C1F1E;color:#D0E8E5;border-radius:8px;padding:18px 52px 18px 18px;font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;font-size:12.5px;line-height:1.85;white-space:pre-wrap;word-break:break-all;position:relative}
+.prompt-box .hl{color:#FFC46B;font-weight:600}
+.prompt-box .fix{color:#86EFAC}
+.prompt-box .warn{color:#FF9A9A}
+.prompt-box .bl{color:#93C5FD}
+.copy-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;color:#B0C8C5}
+.copy-btn:hover{background:rgba(255,255,255,.2);color:#fff}
+.copy-btn.copied{background:var(--green);border-color:var(--green);color:#fff}
+.copy-btn svg{width:16px;height:16px;fill:currentColor}
+.tip{margin:0 20px 18px;padding:14px 16px;border-radius:8px;font-size:13px;line-height:1.65}
+.tip.info{background:var(--accent-soft);border-left:3px solid var(--accent)}
+.tip.success{background:var(--green-soft);border-left:3px solid var(--green)}
+.tip.warning{background:var(--orange-soft);border-left:3px solid var(--orange)}
+.tip.danger{background:var(--red-soft);border-left:3px solid var(--red)}
+.tip.purple{background:var(--purple-soft);border-left:3px solid var(--purple)}
+.tip.blue{background:var(--blue-soft);border-left:3px solid var(--blue)}
+.tip b{display:block;margin-bottom:3px;font-size:13px}
+.checkpoint{background:var(--green-soft);border:1px solid #B8E0CC;border-radius:var(--radius);padding:20px;margin:24px 0}
+.checkpoint h4{font-size:14px;font-weight:700;color:var(--green);margin-bottom:10px}
+.checkpoint ul{list-style:none;padding:0}
+.checkpoint li{font-size:13px;padding:4px 0;padding-left:22px;position:relative;color:var(--sub)}
+.checkpoint li::before{content:"☐";position:absolute;left:0;color:var(--green)}
+.divider{display:flex;align-items:center;gap:16px;margin:40px 0;font-size:14px;font-weight:700;color:var(--accent)}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
+.style-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:0 20px 18px}
+.style-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.style-card .preview{height:56px;border-radius:6px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#fff}
+.style-card .name{font-size:11.5px;font-weight:600;color:var(--ink)}
+.compare{margin:0 20px 18px;border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:13px}
+.compare table{width:100%;border-collapse:collapse}
+.compare th{background:#F5F5F2;font-weight:700;text-align:left;padding:10px 14px;font-size:12px;border-bottom:1px solid var(--border)}
+.compare td{padding:10px 14px;border-bottom:1px solid #F0F0EC;vertical-align:top}
+.compare tr:last-child td{border-bottom:none}
+footer{max-width:780px;margin:0 auto;padding:24px 24px 48px;border-top:1px solid var(--border);font-size:12.5px;color:var(--mute);line-height:1.6}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#042F2E;color:#fff;font-size:13.5px;font-weight:600;padding:10px 22px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:9999;opacity:0;transition:.3s ease;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* flow diagram */
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 20px 18px;font-size:13px;font-weight:600}
+.flow .box{background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center}
+.flow .box.db{background:#E6F5F3;border-color:#0F766E;color:#0F766E}
+.flow .box.gh{background:#EFF6FF;border-color:#2563EB;color:#2563EB}
+.flow .arrow{color:var(--mute);font-size:16px}
+@media(max-width:600px){
+  .hero{padding:36px 20px 32px}.main{padding:0 16px 60px}
+  .nav-inner{padding:0 8px}.nav-inner a{padding:12px 8px;font-size:11.5px}
+  .step-header{padding:16px 16px 12px}
+  .prompt-wrap,.tip,.compare,.style-grid,.flow{margin-left:16px;margin-right:16px}
+  .step-desc{padding:0 16px 14px}
+  .style-grid{grid-template-columns:repeat(3,1fr)}
+  .flow{font-size:11px}.flow .box{padding:6px 10px}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast">복사했습니다 ✓</div>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">바이브코딩 2시간 수업 · 완전판</div>
+    <h1>디지털 명함 메이커<br>Supabase 저장 + GitHub 배포</h1>
+    <p>명함을 만들면 DB에 저장되고, GitHub Pages로 배포하면 누구나 URL로 접속해서 명함을 만들 수 있습니다.</p>
+  </div>
+</header>
+
+<nav class="nav-bar">
+  <div class="nav-inner">
+    <a href="#before">사전 준비</a>
+    <a href="#session1">세션1 · 폼</a>
+    <a href="#session2">세션2 · 스타일</a>
+    <a href="#session3">세션3 · QR+저장</a>
+    <a href="#session4">세션4 · 배포</a>
+    <a href="#sos">막힐 때</a>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ═══════════════ -->
+<!-- 사전 준비 -->
+<!-- ═══════════════ -->
+<section class="section" id="before">
+  <div class="section-label"><span class="dot"></span>사전 준비</div>
+  <h2>수업 전날까지 이것만 해 오세요</h2>
+  <p class="lead">수업 시작 후 설치·가입으로 20분을 잃는 것이 이 수업 최대의 사고입니다.</p>
+
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num orange">!</div>
+      <h3>전체 흐름 — 먼저 큰 그림을 봅니다</h3>
+    </div>
+    <div class="flow">
+      <div class="box">정보 입력</div><span class="arrow">→</span>
+      <div class="box">스타일·글꼴 선택</div><span class="arrow">→</span>
+      <div class="box">명함 미리보기 + QR</div><span class="arrow">→</span>
+      <div class="box db">Supabase에 저장</div><span class="arrow">→</span>
+      <div class="box gh">GitHub Pages 배포</div><span class="arrow">→</span>
+      <div class="box">누구나 접속 가능</div>
+    </div>
+    <div class="step-desc">
+      <strong>Supabase</strong>는 만들어진 명함 데이터를 저장하는 인터넷 DB입니다. 명함을 저장하면 나중에 다시 불러올 수 있고, 몇 장이 만들어졌는지 통계도 볼 수 있습니다.<br><br>
+      <strong>GitHub Pages</strong>는 코드 파일을 올리면 자동으로 웹사이트로 만들어주는 무료 서비스입니다. <code>username.github.io/namecard-maker</code> 형태의 영구 URL을 얻습니다.
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num orange">!</div>
+      <h3>사전 과제 체크리스트</h3>
+    </div>
+    <div class="step-desc">
+      아래 링크를 클릭하면 새 창에서 열립니다. 순서대로 진행하세요.
+    </div>
+
+    <!-- ① VS Code -->
+    <div style="margin:0 20px 16px;background:#fff;border:1px solid #E5E5E0;border-radius:10px;padding:16px 18px">
+      <div style="font-size:14px;font-weight:700;color:#0F766E;margin-bottom:10px">① VS Code 설치 + 확장</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13.5px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span>📦 VS Code 설치</span>
+          <a href="https://code.visualstudio.com/" target="_blank" rel="noopener"
+            style="display:inline-block;background:#0F766E;color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:5px;text-decoration:none">다운로드 →</a>
+          <span style="color:#9E9E9E;font-size:12px">실행되면 ✓</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span>🤖 Claude 확장</span>
+          <a href="https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code" target="_blank" rel="noopener"
+            style="display:inline-block;background:#0F766E;color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:5px;text-decoration:none">설치 →</a>
+          <span style="color:#9E9E9E;font-size:12px">사이드바 채팅창이 열리면 ✓</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span>🔴 Live Server 확장</span>
+          <a href="https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer" target="_blank" rel="noopener"
+            style="display:inline-block;background:#0F766E;color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:5px;text-decoration:none">설치 →</a>
+          <span style="color:#9E9E9E;font-size:12px">확장 목록에 보이면 ✓</span>
+        </div>
+        <div style="font-size:11.5px;color:#6B6B6B;padding-left:24px;line-height:1.5">
+          ↳ 파일을 더블클릭으로 열면 Supabase 연결이 안 됩니다. Live Server로 열어야 DB가 작동합니다.
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span>💾 자동 저장 켜기</span>
+          <span style="color:#9E9E9E;font-size:12px">VS Code → 파일 → 자동 저장 체크 ✓</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② GitHub -->
+    <div style="margin:0 20px 16px;background:#fff;border:1px solid #E5E5E0;border-radius:10px;padding:16px 18px">
+      <div style="font-size:14px;font-weight:700;color:#0F766E;margin-bottom:10px">② GitHub 가입 <span style="font-size:12px;font-weight:400;color:#9E9E9E">(먼저 가입 — Supabase에서 이 계정을 씁니다)</span></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px">
+        <span>👤 GitHub 회원가입</span>
+        <a href="https://github.com/signup" target="_blank" rel="noopener"
+          style="display:inline-block;background:#24292F;color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:5px;text-decoration:none">가입하기 →</a>
+        <span style="color:#9E9E9E;font-size:12px">이메일 인증까지 완료하면 ✓</span>
+      </div>
+    </div>
+
+    <!-- ③ Supabase -->
+    <div style="margin:0 20px 16px;background:#fff;border:1px solid #E5E5E0;border-radius:10px;padding:16px 18px">
+      <div style="font-size:14px;font-weight:700;color:#0F766E;margin-bottom:10px">③ Supabase 가입 <span style="font-size:12px;font-weight:400;color:#9E9E9E">(GitHub 계정으로 가입하면 편합니다)</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13.5px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span>🗄️ Supabase 가입/로그인</span>
+          <a href="https://supabase.com/dashboard" target="_blank" rel="noopener"
+            style="display:inline-block;background:#3ECF8E;color:#000;font-size:12px;font-weight:700;padding:4px 12px;border-radius:5px;text-decoration:none">대시보드 열기 →</a>
+          <span style="color:#9E9E9E;font-size:12px">대시보드가 보이면 ✓</span>
+        </div>
+        <div style="font-size:12px;color:#6B6B6B;margin-top:2px;line-height:1.5">
+          "Sign in with GitHub" 버튼을 누르면 ②에서 만든 GitHub 계정으로 바로 로그인됩니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ 명함 정보 -->
+    <div style="margin:0 20px 16px;background:#fff;border:1px solid #E5E5E0;border-radius:10px;padding:16px 18px">
+      <div style="font-size:14px;font-weight:700;color:#0F766E;margin-bottom:10px">④ 명함 정보 준비 (테스트용)</div>
+      <div style="font-size:13.5px;line-height:1.7">
+        • 이름 / 직함 / 회사명 / 전화 / 이메일 / 주소를 메모장에 적어 오세요<br>
+        • 회사 로고 이미지 1장 (선택, 없어도 됩니다)
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════ -->
+<!-- 세션 1 -->
+<!-- ═══════════════ -->
+<section class="section" id="session1">
+  <div class="section-label"><span class="dot"></span>세션 1 · 0:00~0:28</div>
+  <h2>DB를 세팅하고 입력 폼을 만든다</h2>
+  <p class="lead">Supabase 테이블을 만들고, 명함 정보를 입력받는 폼과 실시간 미리보기 뼈대를 세웁니다.</p>
+
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <h3>Supabase 프로젝트 + namecards 테이블 만들기</h3>
+    </div>
+    <div class="step-desc">
+      supabase.com → <strong>New Project</strong> → 이름: namecard-maker → 비밀번호 설정 → Create.<br>
+      1~2분 기다리면 대시보드가 열립니다.<br><br>
+      <strong>SQL Editor로 테이블을 한 방에 만듭니다:</strong><br>
+      왼쪽 메뉴에서 <strong>SQL Editor</strong> 클릭 → <strong>New query</strong> → 아래 SQL을 복사해서 붙여넣기 → <strong>Run (▶)</strong> 클릭.
+    </div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">
+        <svg viewBox="0 0 16 16"><path d="M4 4h8v1H4zM4 7h8v1H4zM4 10h5v1H4z"/><path d="M2 1h12a1 1 0 011 1v12a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1zm0 1v12h12V2z"/></svg>
+        SQL — 복사해서 SQL Editor에 붙여넣고 Run(▶) 클릭
+      </div>
+      <div class="prompt-box"><span class="cm">-- ============================================
+-- 명함 메이커 테이블 생성 SQL
+-- Supabase SQL Editor에 복사 → Run(▶) 클릭
+-- ============================================</span>
+
+<span class="fix">-- 1. namecards 테이블 생성</span>
+<span class="hl">CREATE TABLE</span> namecards (
+  id             <span class="hl">BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  share_id       <span class="hl">TEXT UNIQUE NOT NULL</span>,     <span class="cm">-- 명함 고유 공유 코드 (URL에 사용)</span>
+  name           TEXT NOT NULL,               <span class="cm">-- 이름 (필수)</span>
+  title_position TEXT DEFAULT '',             <span class="cm">-- 직함</span>
+  company        TEXT DEFAULT '',             <span class="cm">-- 회사명</span>
+  phone          TEXT DEFAULT '',             <span class="cm">-- 전화번호</span>
+  email          TEXT DEFAULT '',             <span class="cm">-- 이메일</span>
+  address        TEXT DEFAULT '',             <span class="cm">-- 주소</span>
+  logo_base64    TEXT DEFAULT '',             <span class="cm">-- 로고 이미지 (base64 텍스트)</span>
+  style_name     TEXT DEFAULT '다크 모던',     <span class="cm">-- 선택한 스타일</span>
+  font_name      TEXT DEFAULT 'Pretendard',   <span class="cm">-- 선택한 글꼴</span>
+  created_at     <span class="hl">TIMESTAMPTZ DEFAULT NOW()</span>  <span class="cm">-- 생성 시각 (자동)</span>
+);
+
+<span class="fix">-- 2. share_id로 빠르게 조회하기 위한 인덱스</span>
+<span class="hl">CREATE INDEX</span> idx_namecards_share_id <span class="hl">ON</span> namecards (share_id);
+
+<span class="fix">-- 3. RLS 비활성화 (수업용 — 실서비스에서는 반드시 켜세요)</span>
+<span class="hl">ALTER TABLE</span> namecards <span class="hl">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="cm">-- 누구나 읽기 가능</span>
+<span class="hl">CREATE POLICY</span> "누구나 명함 조회" <span class="hl">ON</span> namecards
+  <span class="hl">FOR SELECT USING</span> (true);
+
+<span class="cm">-- 누구나 저장 가능</span>
+<span class="hl">CREATE POLICY</span> "누구나 명함 저장" <span class="hl">ON</span> namecards
+  <span class="hl">FOR INSERT WITH CHECK</span> (true);
+
+<span class="cm">-- 누구나 수정 가능</span>
+<span class="hl">CREATE POLICY</span> "누구나 명함 수정" <span class="hl">ON</span> namecards
+  <span class="hl">FOR UPDATE USING</span> (true);
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+    <div class="tip success">
+      <b>✅ "Success. No rows returned" 메시지가 나오면 성공입니다.</b>
+      왼쪽 메뉴에서 Table Editor를 클릭하면 namecards 테이블이 생겨 있습니다. 칼럼 11개가 보이면 완료.
+    </div>
+    <div class="tip info">
+      <b>💡 SQL 한 방이 칼럼 하나씩 만드는 것보다 빠른 이유</b>
+      Table Editor에서 칼럼을 하나씩 추가하면 타입 선택, 기본값 설정을 11번 반복해야 합니다. SQL을 복사-붙여넣기하면 10초면 끝납니다. 칼럼 이름이나 타입을 잘못 입력하는 실수도 방지됩니다.
+    </div>
+
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">1-b</div>
+        <h3>Project ID와 Publishable Key 넣기 — 두 칸이면 끝</h3>
+      </div>
+      <div class="step-desc">
+        Supabase 대시보드에서 <strong>두 군데</strong>를 복사합니다. 각각 Copy 버튼이 있어서 쉽습니다.<br>
+        붙여넣으면 URL과 KEY가 자동으로 정리되어 나타납니다.
+      </div>
+
+      <!-- ① Project ID -->
+      <div style="margin:0 20px 10px">
+        <div style="font-size:13px;font-weight:700;color:#0F766E;margin-bottom:4px">① Project ID 붙여넣기</div>
+        <div style="font-size:11.5px;color:#9E9E9E;margin-bottom:5px;line-height:1.5">
+          <strong>Project Settings</strong> (톱니바퀴) → <strong>General</strong> → "Project ID" 옆의 Copy 클릭
+        </div>
+        <input type="text" id="sb-projid" placeholder="beqargidvhttrbdkqcmf" oninput="updateSupabaseOutput()"
+          style="width:100%;padding:12px 14px;border:2px solid #0F766E;border-radius:8px;font-size:15px;font-family:ui-monospace,Menlo,monospace;background:#FAFFFE;outline:none;transition:.2s;letter-spacing:.5px"
+          onfocus="this.style.borderColor='#0D8A53';this.style.boxShadow='0 0 0 3px rgba(13,138,83,.15)'"
+          onblur="this.style.borderColor='#0F766E';this.style.boxShadow='none'">
+      </div>
+
+      <!-- ② Publishable Key -->
+      <div style="margin:0 20px 14px">
+        <div style="font-size:13px;font-weight:700;color:#0F766E;margin-bottom:4px">② Publishable Key 붙여넣기</div>
+        <div style="font-size:11.5px;color:#9E9E9E;margin-bottom:5px;line-height:1.5">
+          <strong>API Keys</strong> → Publishable key 옆의 복사 버튼(📋) 클릭
+        </div>
+        <input type="text" id="sb-key" placeholder="sb_publishable_xxxxxxx_xxxxx_xxxxx" oninput="updateSupabaseOutput()"
+          style="width:100%;padding:12px 14px;border:2px solid #0F766E;border-radius:8px;font-size:14px;font-family:ui-monospace,Menlo,monospace;background:#FAFFFE;outline:none;transition:.2s"
+          onfocus="this.style.borderColor='#0D8A53';this.style.boxShadow='0 0 0 3px rgba(13,138,83,.15)'"
+          onblur="this.style.borderColor='#0F766E';this.style.boxShadow='none'">
+      </div>
+
+      <!-- 하나만 입력 시 안내 -->
+      <div id="sb-partial-msg" style="margin:0 20px 14px;display:none">
+        <div style="background:#FFF3E0;border-left:3px solid #C96800;border-radius:8px;padding:12px 16px;font-size:13px;color:#92400E">
+          <b id="sb-partial-text"></b>
+        </div>
+      </div>
+
+      <!-- 둘 다 입력 시 결과 -->
+      <div id="sb-output-wrap" style="margin:0 20px 18px;display:none">
+        <div style="background:#E4F5ED;border:2px solid #0D8A53;border-radius:10px;padding:18px">
+          <div style="font-size:14px;font-weight:700;color:#0D8A53;margin-bottom:14px">\u2705 완료! 아래에서 복사하세요</div>
+
+          <div style="margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:4px">\ud83d\udce1 PROJECT URL (자동 생성)</div>
+            <div class="prompt-box" id="sb-url-out" style="background:#0A2E1A;border:1px solid #0D8A53;padding:10px 52px 10px 14px;font-size:14px;line-height:1.4;border-radius:6px">
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+          </div>
+
+          <div style="margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:4px">\ud83d\udd11 PUBLISHABLE KEY</div>
+            <div class="prompt-box" id="sb-key-out" style="background:#0A2E1A;border:1px solid #0D8A53;padding:10px 52px 10px 14px;font-size:13px;line-height:1.4;word-break:break-all;border-radius:6px">
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+          </div>
+
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:4px">\ud83d\udd17 \ud504\ub85c\ud504\ud2b8\uc5d0 \ubd99\uc5ec\ub123\uae30\uc6a9 (URL + KEY \ud55c\ubc88\uc5d0 \ubcf5\uc0ac)</div>
+            <div class="prompt-box" id="sb-both-out" style="background:#0A2E1A;border:1px solid #0D8A53;padding:12px 52px 12px 14px;font-size:14px;line-height:1.8;border-radius:6px">
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num green">2</div>
+      <h3>⭐ 첫 지시 — 전체 뼈대 + 입력 폼 + Supabase 연결</h3>
+    </div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">
+        <svg viewBox="0 0 16 16"><path d="M6 1l7 4.5v5L6 15l-7-4.5v-5zm0 1.72L1.27 5.5 6 8.28l4.73-2.78zm5.5 3.5L7 8.94v4.78l4.5-2.72zM5 13.72V8.94L.5 6.22v4.78z"/></svg>
+        프롬프트
+      </div>
+      <div class="prompt-box"><span class="fix">디지털 명함 메이커 웹앱을 index.html 한 파일로 만들어 줘.
+CSS와 JavaScript 전부 이 파일 안에 넣어.
+
+두 가지 모드가 있어:
+</span><span class="hl">1. 만들기 모드 (기본)</span><span class="fix"> — 정보를 입력하고 명함을 만드는 화면
+</span><span class="hl">2. 보기 모드</span><span class="fix"> — URL에 ?id=xxx가 있으면 DB에서 명함을 불러와 보여주는 화면
+
+[만들기 모드 레이아웃]
+- PC: 왼쪽 입력 패널(400px) + 오른쪽 명함 미리보기
+- 모바일: 위에 입력, 아래에 미리보기
+
+입력 필드:
+1. 이름 (필수) — placeholder "홍길동"
+2. 직함 — "대표이사"
+3. 회사명 — "우리회사"
+4. 전화번호 — "010-1234-5678"
+5. 이메일 — "hello@company.com"
+6. 주소 — "서울시 강남구 테헤란로 123"
+
+명함 미리보기:
+- 크기 가로 450px × 세로 270px (명함 비율 9:5.4)
+- 아무것도 안 입력했으면 예시 데이터로 보여 줘
+- 입력 필드에 글자를 칠 때마다 실시간 반영 (input 이벤트)
+
+[보기 모드]
+- URL에 ?id=xxx 파라미터가 있으면 입력 패널을 숨기고
+  Supabase에서 해당 share_id의 명함을 불러와
+  명함만 크게 보여 줘 (전체 화면)
+
+Supabase 연동:</span>
+<span class="hl" id="prompt-url-key">URL: 여기에_본인_URL_붙여넣기
+KEY: 여기에_본인_KEY_붙여넣기</span>
+<span class="fix">
+supabase-js CDN: https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2
+
+상단 헤더:
+- "✦ 명함 메이커" 제목
+- "정보를 입력하고 스타일을 골라 나만의 명함을 만드세요" 한 줄
+
+성공 기준:
+1. 이름을 치면 명함에 즉시 반영된다
+2. URL에 ?id=test 를 붙이면 보기 모드로 전환된다
+  (아직 DB에 데이터가 없으니 "명함을 찾을 수 없습니다" 표시)
+3. 6개 입력 필드가 전부 보인다</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <h3>Live Server 미리보기 + 로고 업로드 추가</h3>
+    </div>
+    <div class="step-desc">
+      <strong>index.html</strong> 우클릭 → Open with Live Server → 화면 확인 후 로고 기능을 추가합니다.
+    </div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">
+        <svg viewBox="0 0 16 16"><path d="M6 1l7 4.5v5L6 15l-7-4.5v-5zm0 1.72L1.27 5.5 6 8.28l4.73-2.78zm5.5 3.5L7 8.94v4.78l4.5-2.72zM5 13.72V8.94L.5 6.22v4.78z"/></svg>
+        프롬프트
+      </div>
+      <div class="prompt-box"><span class="fix">로고 이미지 업로드 기능을 추가해 줘.
+
+무엇을:
+1. 주소 아래에 "회사 로고 (선택)" 영역
+2. 점선 박스 — "로고를 여기에 끌어놓거나 클릭" 안내
+3. 이미지 올리면 → 입력 패널에 미리보기 + 명함에도 표시
+4. "삭제" 버튼으로 지울 수 있음
+5. 안 올리면 명함에 로고 자리가 안 보임
+
+기술:
+- FileReader API로 base64 변환 (서버 업로드 없음)
+- jpg, png, svg만 허용, 최대 2MB
+- base64 문자열은 나중에 DB에 그대로 저장할 것
+
+어디를: 입력 패널, 주소 아래
+
+성공 기준:
+1. 이미지 선택 → 명함에 로고 표시
+2. 삭제 → 로고 사라짐
+3. 로고 없이도 레이아웃 정상</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+
+  <div class="checkpoint">
+    <h4>✓ 세션 1 체크포인트</h4>
+    <ul>
+      <li>Supabase에 namecards 테이블이 있다</li>
+      <li>6개 입력 필드 + 로고 업로드가 보인다</li>
+      <li>글자를 치면 명함 미리보기에 실시간 반영된다</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════ -->
+<!-- 세션 2 -->
+<!-- ═══════════════ -->
+<section class="section" id="session2">
+  <div class="section-label"><span class="dot"></span>세션 2 · 0:28~0:55</div>
+  <h2>5가지 스타일과 5가지 글꼴</h2>
+  <p class="lead">클릭 한 번으로 명함 디자인이 바뀝니다. 5 × 5 = 25가지 조합이 가능합니다.</p>
+
+  <!-- STEP 4 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num green">4</div>
+      <h3>⭐ 5가지 스타일 선택</h3>
+    </div>
+    <div class="style-grid">
+      <div class="style-card"><div class="preview" style="background:linear-gradient(135deg,#1E293B,#334155)">①</div><div class="name">다크 모던</div></div>
+      <div class="style-card"><div class="preview" style="background:#fff;border:1px solid #ddd;color:#333">②</div><div class="name">미니멀 화이트</div></div>
+      <div class="style-card"><div class="preview" style="background:linear-gradient(135deg,#7C3AED,#4F46E5)">③</div><div class="name">컬러 그라데이션</div></div>
+      <div class="style-card"><div class="preview" style="background:#FDF6E3;color:#92400E;border:1px solid #E8D5B5">④</div><div class="name">클래식 크림</div></div>
+      <div class="style-card"><div class="preview" style="background:linear-gradient(135deg,#0F766E,#2DD4BF)">⑤</div><div class="name">네이처 그린</div></div>
+    </div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">
+        <svg viewBox="0 0 16 16"><path d="M6 1l7 4.5v5L6 15l-7-4.5v-5zm0 1.72L1.27 5.5 6 8.28l4.73-2.78zm5.5 3.5L7 8.94v4.78l4.5-2.72zM5 13.72V8.94L.5 6.22v4.78z"/></svg>
+        프롬프트
+      </div>
+      <div class="prompt-box"><span class="fix">명함 스타일 5가지를 선택할 수 있게 만들어 줘.
+
+입력 패널에 "명함 스타일" 섹션을 추가하고
+5가지를 작은 미리보기 카드로 보여 줘.
+클릭하면 선택 표시 + 명함이 즉시 바뀜.
+
+스타일 데이터를 JavaScript 객체 배열로 관리하고,
+선택한 스타일명을 전역 변수에 저장해 줘
+(나중에 DB 저장 시 style_name 칼럼에 넣을 거야).
+
+5가지 스타일:</span>
+
+<span class="hl">① 다크 모던</span><span class="fix"> — 배경 #1E293B→#334155, 글자 흰색, 황금 구분선, 로고 좌상단</span>
+<span class="hl">② 미니멀 화이트</span><span class="fix"> — 배경 #FFFFFF, 글자 #333, 연회색 선, 깔끔 왼쪽 정렬</span>
+<span class="hl">③ 컬러 그라데이션</span><span class="fix"> — 배경 #7C3AED→#4F46E5, 글자 흰색, 반투명 구분선</span>
+<span class="hl">④ 클래식 크림</span><span class="fix"> — 배경 #FDF6E3, 글자 #78350F, 갈색 선, 중앙 정렬</span>
+<span class="hl">⑤ 네이처 그린</span><span class="fix"> — 배경 #0F766E→#2DD4BF, 글자 흰색, 자연 느낌</span>
+
+<span class="fix">기본 선택: ① 다크 모던
+
+성공 기준:
+1. 5개 카드가 보이고 클릭하면 선택 표시
+2. 명함이 즉시 해당 스타일로 바뀐다
+3. 각 스타일이 시각적으로 확실히 다르다</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num green">5</div>
+      <h3>⭐ 5가지 글꼴 선택</h3>
+    </div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">
+        <svg viewBox="0 0 16 16"><path d="M6 1l7 4.5v5L6 15l-7-4.5v-5zm0 1.72L1.27 5.5 6 8.28l4.73-2.78zm5.5 3.5L7 8.94v4.78l4.5-2.72zM5 13.72V8.94L.5 6.22v4.78z"/></svg>
+        프롬프트
+      </div>
+      <div class="prompt-box"><span class="fix">글꼴 선택 기능을 추가해 줘.
+
+Google Fonts에서 한글 서체 5가지를 불러와:
+</span><span class="hl">① Pretendard</span><span class="fix"> (CDN: cdn.jsdelivr.net/gh/orioncactus/pretendard)
+</span><span class="hl">② Noto Sans KR</span><span class="fix"> — 기본 고딕
+</span><span class="hl">③ Noto Serif KR</span><span class="fix"> — 명조체
+</span><span class="hl">④ Gothic A1</span><span class="fix"> — 둥근 고딕
+</span><span class="hl">⑤ Black Han Sans</span><span class="fix"> — 굵은 제목체
+
+각 글꼴을 해당 서체로 표시한 버튼 5개.
+클릭하면 명함 글꼴이 바뀌고, 선택한 글꼴명을
+전역 변수에 저장 (DB의 font_name 칼럼용).
+
+글꼴은 font-family만 바꾸고, 색은 스타일이 관리.
+기본: ① Pretendard
+
+성공 기준:
+1. 5개 글꼴 버튼이 각각 해당 서체로 보인다
+2. 클릭하면 명함 글자가 바뀐다
+3. 스타일과 글꼴을 동시에 바꿔도 깨지지 않는다</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">6</div>
+      <h3>조합 테스트 + 3칸 지시 다듬기</h3>
+    </div>
+    <div class="step-desc">
+      5 스타일 × 5 글꼴 조합을 최소 5가지 눌러 봅니다.<br>
+      깨지는 곳, 글자가 안 보이는 곳을 3칸 지시로 수정하세요.
+    </div>
+    <div class="tip warning">
+      <b>⚠️ "밝은 배경 + 흰 글씨" 문제가 생기면 이렇게 지시하세요:</b>
+      "글꼴 선택은 font-family만 바꾸고, 글자 색은 스타일이 관리하게 분리해 줘. 다크 모던에서 5가지 글꼴을 눌러도 글자가 항상 흰색이어야 해."
+    </div>
+  </div>
+
+  <div class="checkpoint">
+    <h4>✓ 세션 2 체크포인트</h4>
+    <ul>
+      <li>5가지 스타일이 전부 다르게 보인다</li>
+      <li>5가지 글꼴이 전부 다르게 보인다</li>
+      <li>스타일+글꼴 동시 변경 시 깨지지 않는다</li>
+    </ul>
+  </div>
+
+  <div class="divider">☕ 휴식 10분</div>
+</section>
+
+<!-- ═══════════════ -->
+<!-- 세션 3 -->
+<!-- ═══════════════ -->
+<section class="section" id="session3">
+  <div class="section-label"><span class="dot"></span>세션 3 · 1:05~1:33</div>
+  <h2>QR코드 + DB 저장 + 이미지 저장</h2>
+  <p class="lead">명함 안에 QR을 넣고, 만든 명함을 Supabase에 저장하고, PNG로도 다운받습니다.</p>
+
+  <!-- STEP 7 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num green">7</div>
+      <h3>⭐ 명함 안에 QR코드 (vCard)</h3>
+    </div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">
+        <svg viewBox="0 0 16 16"><path d="M6 1l7 4.5v5L6 15l-7-4.5v-5zm0 1.72L1.27 5.5 6 8.28l4.73-2.78zm5.5 3.5L7 8.94v4.78l4.5-2.72zM5 13.72V8.94L.5 6.22v4.78z"/></svg>
+        프롬프트
+      </div>
+      <div class="prompt-box"><span class="fix">명함 안에 QR코드를 넣어 줘.
+
+라이브러리: https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js
+
+QR 안에 vCard 형식으로 연락처 정보를 넣어 줘:
+BEGIN:VCARD
+VERSION:3.0
+N:이름
+ORG:회사명
+TITLE:직함
+TEL:전화번호
+EMAIL:이메일
+ADR:주소
+END:VCARD
+
+위치: 명함 카드 오른쪽 하단, 크기 60x60px
+입력이 바뀔 때마다 QR도 재생성.
+어두운 배경 스타일에서는 QR 뒤에 흰 패딩 4px.
+
+성공 기준:
+1. 명함 안에 QR이 작게 보인다
+2. 정보를 바꾸면 QR도 바뀐다
+3. 폰으로 스캔하면 연락처 저장 화면이 뜬다</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+
+  <!-- STEP 8 ★★ -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num green">8</div>
+      <h3>⭐ "명함 저장하기" — DB에 쓰기</h3>
+    </div>
+    <div class="step-desc">
+      <strong>이 단계가 DB 연동의 핵심입니다.</strong> 버튼을 누르면 명함 데이터가 Supabase에 저장되고, 고유 공유 링크가 생성됩니다.
+    </div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">
+        <svg viewBox="0 0 16 16"><path d="M6 1l7 4.5v5L6 15l-7-4.5v-5zm0 1.72L1.27 5.5 6 8.28l4.73-2.78zm5.5 3.5L7 8.94v4.78l4.5-2.72zM5 13.72V8.94L.5 6.22v4.78z"/></svg>
+        프롬프트
+      </div>
+      <div class="prompt-box"><span class="fix">명함을 DB에 저장하고 공유 링크를 생성하는 기능을 만들어 줘.
+
+[저장 버튼]
+1. 명함 미리보기 아래에 "💾 명함 저장하기" 버튼
+2. 이름이 비어 있으면 "이름을 입력해 주세요" 경고
+
+[저장 동작]
+1. 8자리 랜덤 share_id를 생성 (영문소문자+숫자)
+2. Supabase namecards 테이블에 INSERT:
+   share_id, name, title_position, company,
+   phone, email, address, logo_base64,
+   style_name, font_name
+3. 저장 성공 시:
+   - 화면에 "✓ 저장되었습니다!" 메시지
+   - 바로 아래에 공유 링크 표시:
+     "내 명함 링크: [현재URL]?id=[share_id]"
+   - 링크 옆에 "복사" 버튼 → 클릭하면 클립보드에 복사
+   - "이 링크를 공유하면 누구나 내 명함을 볼 수 있습니다" 안내
+
+[공유 링크로 접속했을 때]
+- 2단계에서 만든 보기 모드가 작동:
+  URL에 ?id=xxx → DB에서 해당 명함 조회 →
+  저장된 스타일·글꼴·로고로 명함을 표시
+- 입력 패널은 숨기고 명함만 크게 보여 줘
+- 하단에 "나도 명함 만들기 →" 링크 추가
+
+성공 기준:
+1. 저장 버튼 → Supabase에 행이 추가된다
+2. 공유 링크가 화면에 표시된다
+3. 공유 링크를 새 탭에서 열면 명함이 보인다
+4. 저장된 스타일·글꼴이 그대로 적용되어 있다</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+    <div class="tip danger">
+      <b>⚠️ 저장이 안 되면 RLS부터 확인하세요.</b>
+      Supabase 대시보드 → Authentication → Policies에서 namecards 테이블의 RLS가 꺼져 있는지 확인합니다.
+    </div>
+  </div>
+
+  <!-- STEP 9 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">9</div>
+      <h3>PNG 이미지 저장 기능</h3>
+    </div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">
+        <svg viewBox="0 0 16 16"><path d="M6 1l7 4.5v5L6 15l-7-4.5v-5zm0 1.72L1.27 5.5 6 8.28l4.73-2.78zm5.5 3.5L7 8.94v4.78l4.5-2.72zM5 13.72V8.94L.5 6.22v4.78z"/></svg>
+        프롬프트
+      </div>
+      <div class="prompt-box"><span class="fix">명함을 이미지로 저장하는 기능을 추가해 줘.
+
+라이브러리:
+https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js
+
+"💾 명함 저장하기" 버튼 옆에 "📥 PNG 다운로드" 버튼 추가.
+
+클릭하면:
+1. 명함 카드 영역을 html2canvas로 캡처 (scale: 2)
+2. "명함_이름_스타일명.png" 파일로 자동 다운로드
+3. QR코드도 이미지에 포함
+
+성공 기준:
+1. 버튼 클릭 → PNG 파일 다운로드
+2. 이미지가 선명하고 잘린 곳 없음
+3. QR코드가 이미지에 포함됨</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+
+  <!-- STEP 10 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">10</div>
+      <h3>모바일 반응형 확인</h3>
+    </div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">
+        <svg viewBox="0 0 16 16"><path d="M6 1l7 4.5v5L6 15l-7-4.5v-5zm0 1.72L1.27 5.5 6 8.28l4.73-2.78zm5.5 3.5L7 8.94v4.78l4.5-2.72zM5 13.72V8.94L.5 6.22v4.78z"/></svg>
+        프롬프트
+      </div>
+      <div class="prompt-box"><span class="fix">모바일 최종 점검해 줘.
+
+390px 폭에서:
+1. 입력 패널이 위, 명함이 아래로 세로 배치
+2. 스타일 카드 5개가 2줄로 정리
+3. 명함이 화면 폭에 맞게 축소 (비율 유지)
+4. 버튼이 손가락 크기 (최소 48px 높이)
+5. 보기 모드에서도 명함이 중앙에 잘 보임
+
+성공 기준: F12 → iPhone SE(375px)에서 전부 작동</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+
+  <div class="checkpoint">
+    <h4>✓ 세션 3 체크포인트</h4>
+    <ul>
+      <li>명함 안에 QR코드가 보인다</li>
+      <li>저장 버튼 → Supabase에 행이 추가된다</li>
+      <li>공유 링크를 새 탭에서 열면 명함이 보인다</li>
+      <li>PNG 다운로드가 된다</li>
+      <li>모바일에서 깨지지 않는다</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════ -->
+<!-- 세션 4 -->
+<!-- ═══════════════ -->
+<section class="section" id="session4">
+  <div class="section-label"><span class="dot blue"></span>세션 4 · 1:33~2:00</div>
+  <h2>점검하고 GitHub Pages로 배포한다</h2>
+  <p class="lead">시험지로 점검하고, GitHub에 올려서 영구 URL을 얻습니다.</p>
+
+  <!-- STEP 11 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num orange">11</div>
+      <h3>9문항 시험지 — 손가락으로 점검</h3>
+    </div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">
+        <svg viewBox="0 0 16 16"><path d="M4 4h8v1H4zM4 7h8v1H4zM4 10h5v1H4z"/><path d="M2 1h12a1 1 0 011 1v12a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1zm0 1v12h12V2z"/></svg>
+        시험지
+      </div>
+      <div class="prompt-box">
+<span class="fix">① 이름을 치면 즉시 반영 → 한 글자마다 바로 바뀜
+② 5가지 스타일이 전부 다름 → 순서대로 눌러서 확인
+③ 5가지 글꼴이 전부 다름 → 순서대로 눌러서 확인
+④ 로고 올리기/삭제 → 명함에 반영/제거
+⑤ QR코드가 명함 안에 보임 → 우하단 확인
+⑥ 저장 버튼 → Supabase에 행 추가됨
+⑦ 공유 링크를 새 탭에서 열면 명함이 보임
+⑧ PNG 저장 → 이미지에 QR 포함
+⑨ 모바일 390px에서 전부 작동</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+
+  <!-- STEP 12 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">12</div>
+      <h3>짝 교차 점검 (3분씩)</h3>
+    </div>
+    <div class="step-desc">
+      옆 사람의 명함 메이커에서 <strong>내 정보를 직접 입력</strong>해 봅니다.<br>
+      "어디에 이름을 쓰는지, 스타일을 어떻게 바꾸는지 설명 없이 알겠는가."<br>
+      <strong>변명 금지, 기록만.</strong>
+    </div>
+  </div>
+
+  <!-- STEP 13 ★★ -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num blue">13</div>
+      <h3>⭐ GitHub Pages 배포 — 5단계</h3>
+    </div>
+    <div class="step-desc">
+      GitHub에 파일을 올리고, Pages를 켜면 영구 URL이 생깁니다.<br>
+      터미널이나 Git 명령어는 <strong>하나도 안 씁니다.</strong> 전부 웹 브라우저에서 합니다.
+    </div>
+    <div class="prompt-wrap">
+      <div class="prompt-label">
+        <svg viewBox="0 0 16 16"><path d="M4 4h8v1H4zM4 7h8v1H4zM4 10h5v1H4z"/><path d="M2 1h12a1 1 0 011 1v12a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1zm0 1v12h12V2z"/></svg>
+        GitHub Pages 배포 — 화면에 띄워 두고 따라하세요
+      </div>
+      <div class="prompt-box">
+<span class="bl">[ 1단계 ] 새 저장소 만들기</span>
+github.com → 우측 상단 "+" → <span class="hl">New repository</span>
+• Repository name: <span class="hl">namecard-maker</span>
+• Public 선택 (Pages는 Public에서만 무료)
+• "Add a README file" 체크
+• → <span class="hl">Create repository</span> 클릭
+
+<span class="bl">[ 2단계 ] 파일 올리기</span>
+저장소 페이지에서 <span class="hl">Add file → Upload files</span> 클릭
+→ VS Code의 index.html 파일을 <span class="hl">브라우저에 드래그</span>
+→ 아래 "Commit changes" 버튼의 메시지에
+  "명함 메이커 첫 업로드" 입력
+→ <span class="hl">Commit changes</span> 클릭
+  (images 폴더가 있으면 함께 드래그)
+
+<span class="bl">[ 3단계 ] GitHub Pages 켜기</span>
+저장소 상단 탭에서 <span class="hl">Settings</span> 클릭
+→ 왼쪽 메뉴에서 <span class="hl">Pages</span> 클릭
+→ Source 항목에서 <span class="hl">Branch: main</span> 선택
+→ 폴더: <span class="hl">/ (root)</span> 선택
+→ <span class="hl">Save</span> 클릭
+
+<span class="bl">[ 4단계 ] 1~2분 기다리기</span>
+"Your site is live at" 메시지가 나올 때까지 기다립니다.
+새로고침하면 URL이 나타납니다:
+<span class="hl">https://유저이름.github.io/namecard-maker/</span>
+
+<span class="bl">[ 5단계 ] 확인</span>
+위 URL을 폰으로 열어서:
+1. 명함 메이커가 뜨는지 확인
+2. 명함을 만들고 저장 → 공유 링크가 잘 되는지 확인
+3. 공유 링크를 다른 사람에게 보내서 열리는지 확인
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+    <div class="tip blue">
+      <b>💡 GitHub Pages는 배포까지 1~2분 걸립니다.</b>
+      Save 누르고 바로 URL을 열면 404가 뜰 수 있습니다. 1~2분 기다렸다가 새로고침하세요. Actions 탭에서 배포 상태를 확인할 수 있습니다.
+    </div>
+    <div class="tip warning">
+      <b>⚠️ 코드를 수정한 후에는 다시 올려야 합니다.</b>
+      VS Code에서 코드를 고쳤으면 GitHub 저장소에서 다시 Upload files → 같은 이름의 index.html을 올리면 덮어쓰기 됩니다. 1~2분 후 사이트에 반영됩니다.
+    </div>
+  </div>
+
+  <!-- STEP 14 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num green">14</div>
+      <h3>🎉 내 명함 만들기 + 서로 교환</h3>
+    </div>
+    <div class="step-desc">
+      배포된 URL에서 <strong>내 실제 정보로 명함을 만들고 저장</strong>합니다.<br>
+      공유 링크를 옆 사람에게 보내서 열리는지 확인합니다.<br>
+      명함의 QR코드를 폰으로 스캔해서 연락처가 저장되는지 확인합니다.
+    </div>
+    <div class="tip success">
+      <b>🎉 두 가지를 만들었습니다.</b>
+      ① <strong>명함 메이커 도구</strong> — 누구나 접속해서 명함을 만들 수 있는 웹앱<br>
+      ② <strong>내 디지털 명함</strong> — 공유 링크로 언제든 보여줄 수 있는 명함<br><br>
+      명함 메이커 URL을 팀원에게 보내면, 모두가 같은 브랜드 스타일로 명함을 만들 수 있습니다.
+    </div>
+  </div>
+
+  <div class="checkpoint">
+    <h4>✓ 최종 체크리스트</h4>
+    <ul>
+      <li>GitHub Pages URL이 발급되었다</li>
+      <li>URL을 폰으로 열면 명함 메이커가 뜬다</li>
+      <li>명함을 저장하면 공유 링크가 나온다</li>
+      <li>공유 링크를 열면 저장된 명함이 보인다</li>
+      <li>QR 스캔 → 연락처 저장 화면이 뜬다</li>
+      <li>PNG 다운로드 → QR 포함된 이미지</li>
+      <li>Supabase에 저장된 행을 확인했다</li>
+      <li>9문항 시험지에서 '못 씀' 0건이다</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════ -->
+<!-- SOS -->
+<!-- ═══════════════ -->
+<section class="section" id="sos">
+  <div class="section-label"><span class="dot" style="background:var(--orange)"></span>SOS</div>
+  <h2>막혔을 때 쓰는 프롬프트</h2>
+  <p class="lead">에러 메시지를 그대로 복사 붙여넣기하는 게 가장 빠릅니다.</p>
+
+  <div class="step">
+    <div class="step-header"><div class="step-num orange">A</div><h3>DB 저장이 안 될 때</h3></div>
+    <div class="prompt-wrap"><div class="prompt-label"><svg viewBox="0 0 16 16"><path d="M6 1l7 4.5v5L6 15l-7-4.5v-5zm0 1.72L1.27 5.5 6 8.28l4.73-2.78zm5.5 3.5L7 8.94v4.78l4.5-2.72zM5 13.72V8.94L.5 6.22v4.78z"/></svg>프롬프트</div>
+      <div class="prompt-box"><span class="fix">저장 버튼을 눌렀는데 Supabase에 행이 안 생겨.
+콘솔 에러: </span><span class="hl">(붙여넣기)</span><span class="fix">
+
+RLS 문제인지, 칼럼 이름 불일치인지, URL/KEY 오타인지
+순서대로 확인 방법을 알려 줘.</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><div class="step-num orange">B</div><h3>공유 링크가 "명함 없음"으로 뜰 때</h3></div>
+    <div class="prompt-wrap"><div class="prompt-label"><svg viewBox="0 0 16 16"><path d="M6 1l7 4.5v5L6 15l-7-4.5v-5zm0 1.72L1.27 5.5 6 8.28l4.73-2.78zm5.5 3.5L7 8.94v4.78l4.5-2.72zM5 13.72V8.94L.5 6.22v4.78z"/></svg>프롬프트</div>
+      <div class="prompt-box"><span class="fix">명함을 저장하고 공유 링크를 새 탭에서 열었는데
+"명함을 찾을 수 없습니다"가 뜨거나 빈 화면이야.
+콘솔 에러: </span><span class="hl">(붙여넣기)</span><span class="fix">
+
+URL의 ?id= 파라미터 값이 DB의 share_id와 일치하는지,
+보기 모드의 Supabase 조회 쿼리가 맞는지 확인해 줘.</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><div class="step-num orange">C</div><h3>GitHub Pages가 404일 때</h3></div>
+    <div class="prompt-wrap"><div class="prompt-label"><svg viewBox="0 0 16 16"><path d="M6 1l7 4.5v5L6 15l-7-4.5v-5zm0 1.72L1.27 5.5 6 8.28l4.73-2.78zm5.5 3.5L7 8.94v4.78l4.5-2.72zM5 13.72V8.94L.5 6.22v4.78z"/></svg>프롬프트</div>
+      <div class="prompt-box"><span class="fix">GitHub Pages URL을 열었는데 404 에러가 떠.
+
+확인할 것:
+1. Settings → Pages에서 Branch가 main으로 선택되어 있는지
+2. 파일 이름이 정확히 index.html인지 (Index.html 아님)
+3. 저장소가 Public인지
+4. Save 누른 후 2분 이상 기다렸는지
+5. Actions 탭에서 배포 상태가 ✓인지
+
+위 5개를 하나씩 확인하겠습니다.</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><div class="step-num orange">D</div><h3>QR코드 / 이미지 저장 / 스타일 문제</h3></div>
+    <div class="prompt-wrap"><div class="prompt-label"><svg viewBox="0 0 16 16"><path d="M6 1l7 4.5v5L6 15l-7-4.5v-5zm0 1.72L1.27 5.5 6 8.28l4.73-2.78zm5.5 3.5L7 8.94v4.78l4.5-2.72zM5 13.72V8.94L.5 6.22v4.78z"/></svg>프롬프트</div>
+      <div class="prompt-box"><span class="fix">문제 상황: </span><span class="hl">(아래 중 해당하는 것 골라서 쓰세요)</span><span class="fix">
+- QR코드가 빈 상자로 보인다
+- PNG 저장 시 QR이 포함 안 된다
+- 스타일을 눌러도 안 바뀐다
+- 글꼴을 눌러도 안 바뀐다
+- 로고가 명함에 안 나온다
+- 화면이 완전히 백지가 됐다
+
+콘솔 에러: </span><span class="hl">(붙여넣기)</span><span class="fix">
+
+원인 후보 3개와 확인 순서를 알려 줘.
+코드는 아직 고치지 마.</span>
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header"><div class="step-num orange">E</div><h3>수정 후 GitHub에 다시 올리기</h3></div>
+    <div class="prompt-wrap"><div class="prompt-label"><svg viewBox="0 0 16 16"><path d="M4 4h8v1H4zM4 7h8v1H4zM4 10h5v1H4z"/><path d="M2 1h12a1 1 0 011 1v12a1 1 0 01-1 1H2a1 1 0 01-1-1V2a1 1 0 011-1zm0 1v12h12V2z"/></svg>따라하기</div>
+      <div class="prompt-box">
+<span class="bl">코드를 수정한 후 GitHub에 반영하는 방법:</span>
+
+1. GitHub 저장소 페이지로 이동
+2. index.html 파일을 클릭
+3. 우측 상단 연필 아이콘(✏️ Edit) 클릭
+4. <span class="warn">전체 선택(Ctrl+A) → 삭제</span>
+5. VS Code의 index.html 내용을 <span class="hl">전체 복사(Ctrl+A → Ctrl+C)</span>
+6. GitHub 편집기에 <span class="hl">붙여넣기(Ctrl+V)</span>
+7. 아래 "Commit changes" 클릭
+
+또는 더 쉬운 방법:
+1. 저장소 페이지에서 <span class="hl">Add file → Upload files</span>
+2. 수정된 index.html을 드래그
+3. "Commit changes" 클릭
+→ <span class="fix">같은 이름이면 자동 덮어쓰기</span>
+→ 1~2분 후 Pages에 반영
+<button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  디지털 명함 메이커 프롬프트 가이드 (Supabase + GitHub Pages 완전판)<br>
+  바이브코딩 2시간 수업용 · 기준 교안: Living AI 스타트업 육성교육 표준 교재 제11장
+</footer>
+
+<script>
+// ── Project ID + KEY → URL 자동 생성 + 결과 표시 ──
+function updateSupabaseOutput() {
+  var projId = document.getElementById('sb-projid').value.trim();
+  var key = document.getElementById('sb-key').value.trim();
+  var wrap = document.getElementById('sb-output-wrap');
+  var partial = document.getElementById('sb-partial-msg');
+  var partialText = document.getElementById('sb-partial-text');
+  var urlOut = document.getElementById('sb-url-out');
+  var keyOut = document.getElementById('sb-key-out');
+  var bothOut = document.getElementById('sb-both-out');
+  var promptUrlKey = document.getElementById('prompt-url-key');
+
+  // 둘 다 비어있으면 숨기기
+  if (!projId && !key) {
+    wrap.style.display = 'none';
+    partial.style.display = 'none';
+    if (promptUrlKey) promptUrlKey.textContent = 'URL: 여기에_본인_URL_붙여넣기\nKEY: 여기에_본인_KEY_붙여넣기';
+    return;
+  }
+
+  // 하나만 입력
+  if (projId && !key) {
+    wrap.style.display = 'none';
+    partial.style.display = 'block';
+    partialText.textContent = '\u2714 Project ID 완료! \u2192 이제 \u2461 Publishable Key를 붙여넣으세요 (API Keys 페이지)';
+    return;
+  }
+  if (!projId && key) {
+    wrap.style.display = 'none';
+    partial.style.display = 'block';
+    partialText.textContent = '\u2714 Key 완료! \u2192 이제 \u2460 Project ID를 붙여넣으세요 (Settings \u2192 General)';
+    return;
+  }
+
+  // 둘 다 입력 → URL 자동 생성
+  partial.style.display = 'none';
+  wrap.style.display = 'block';
+
+  var url = 'https://' + projId + '.supabase.co';
+
+  // URL 박스
+  var urlBtn = urlOut.querySelector('.copy-btn');
+  urlOut.textContent = url;
+  if (urlBtn) urlOut.appendChild(urlBtn);
+
+  // KEY 박스
+  var keyBtn = keyOut.querySelector('.copy-btn');
+  keyOut.textContent = key;
+  if (keyBtn) keyOut.appendChild(keyBtn);
+
+  // 합친 박스
+  var bothBtn = bothOut.querySelector('.copy-btn');
+  bothOut.textContent = 'Supabase 설정:\nURL: ' + url + '\nKEY: ' + key;
+  if (bothBtn) bothOut.appendChild(bothBtn);
+
+  // Step 2 프롬프트 업데이트
+  if (promptUrlKey) promptUrlKey.textContent = 'URL: ' + url + '\nKEY: ' + key;
+}
+
+// ── 클립보드 복사 (file:// 프로토콜에서도 작동) ──
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  ta.style.top = '-9999px';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch(e) { ok = false; }
+  document.body.removeChild(ta);
+  return ok;
+}
+
+function copyPrompt(btn) {
+  var box = btn.closest('.prompt-box');
+  var clone = box.cloneNode(true);
+  var cb = clone.querySelector('.copy-btn');
+  if (cb) cb.remove();
+  var text = clone.textContent.trim();
+
+  function onSuccess() {
+    btn.classList.add('copied');
+    btn.innerHTML = '<svg viewBox="0 0 16 16"><path d="M13.5 4.5l-7 7L3 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    showToast('복사했습니다 ✓');
+    setTimeout(function() {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg>';
+    }, 2000);
+  }
+
+  function onFail() {
+    showToast('복사 실패 — 직접 선택해서 Ctrl+C 하세요');
+  }
+
+  // 방법 1: Clipboard API (HTTPS / localhost)
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onSuccess).catch(function() {
+      // 방법 2: fallback (file:// 등)
+      if (fallbackCopy(text)) { onSuccess(); } else { onFail(); }
+    });
+  } else {
+    // 방법 2: fallback
+    if (fallbackCopy(text)) { onSuccess(); } else { onFail(); }
+  }
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg || '복사했습니다 ✓';
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 1800);
+}
+
+// ── 네비게이션 ──
+var sections = document.querySelectorAll('.section');
+var navLinks = document.querySelectorAll('.nav-inner a');
+
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      navLinks.forEach(function(l) { l.classList.remove('active'); });
+      var id = entry.target.id;
+      var link = document.querySelector('.nav-inner a[href="#' + id + '"]');
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-80px 0px -60% 0px' });
+
+sections.forEach(function(s) { observer.observe(s); });
+
+navLinks.forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    e.preventDefault();
+    var target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      var y = target.getBoundingClientRect().top + window.pageYOffset - 56;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  });
+});
+</script>
+</body>
+</html>
