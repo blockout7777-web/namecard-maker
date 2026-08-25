@@ -15,19 +15,23 @@
   --purple:#7C3AED;--purple-soft:#F0EBFA;
   --blue:#2563EB;--blue-soft:#EFF6FF;
   --border:#E5E5E0;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.06);
+  /* 전 페이지 공통 가로폭 · 반응형 여백 토큰 */
+  --maxw:780px;--pad:clamp(16px,4vw,24px);--gut:clamp(14px,3.2vw,20px);
 }
 *{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+img,svg,video,canvas{max-width:100%}
 body{font-family:Pretendard,'Pretendard Variable',-apple-system,'Malgun Gothic',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
-.hero{background:linear-gradient(135deg,#042F2E 0%,#0F766E 50%,#2DD4BF 100%);color:#fff;padding:48px 24px 40px}
-.hero-inner{max-width:780px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#042F2E 0%,#0F766E 50%,#2DD4BF 100%);color:#fff;padding:48px var(--pad) 40px}
+.hero-inner{max-width:var(--maxw);margin:0 auto;width:100%}
 .hero-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);font-size:12px;font-weight:600;letter-spacing:.06em;padding:4px 14px;border-radius:20px;margin-bottom:16px}
 .hero h1{font-size:clamp(24px,5vw,34px);font-weight:800;line-height:1.25;letter-spacing:-.02em;margin-bottom:10px}
-.hero p{font-size:15px;color:rgba(255,255,255,.75);max-width:600px}
+.hero p{font-size:15px;color:rgba(255,255,255,.75);max-width:600px;overflow-wrap:anywhere}
 .nav-bar{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.nav-inner{max-width:780px;margin:0 auto;display:flex;gap:0;padding:0 24px}
+.nav-inner{max-width:var(--maxw);margin:0 auto;display:flex;gap:0;padding:0 var(--pad)}
 .nav-inner a{flex-shrink:0;display:block;padding:13px 14px;font-size:12.5px;font-weight:600;color:var(--sub);text-decoration:none;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
 .nav-inner a:hover,.nav-inner a.active{color:var(--accent);border-bottom-color:var(--accent)}
-.main{max-width:780px;margin:0 auto;padding:0 24px 80px}
+.main{max-width:var(--maxw);margin:0 auto;width:100%;padding:0 var(--pad) 80px}
 .section{padding-top:48px}
 .section-label{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
 .section-label .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
@@ -35,16 +39,18 @@ body{font-family:Pretendard,'Pretendard Variable',-apple-system,'Malgun Gothic',
 .section h2{font-size:clamp(20px,4vw,26px);font-weight:800;letter-spacing:-.02em;margin-bottom:6px;line-height:1.3}
 .section .lead{font-size:14.5px;color:var(--sub);margin-bottom:28px;max-width:620px}
 .step{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;box-shadow:var(--shadow)}
-.step-header{display:flex;align-items:center;gap:14px;padding:18px 20px 14px}
+.step-header{display:flex;align-items:center;gap:14px;padding:18px var(--gut) 14px}
 .step-num{flex-shrink:0;width:36px;height:36px;background:var(--accent);color:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
 .step-num.green{background:var(--green)}.step-num.orange{background:var(--orange)}.step-num.purple{background:var(--purple)}.step-num.blue{background:var(--blue)}
-.step-header h3{font-size:15.5px;font-weight:700;line-height:1.3}
-.step-desc{padding:0 20px 16px;font-size:13.5px;color:var(--sub);line-height:1.7}
+.step-header h3{font-size:15.5px;font-weight:700;line-height:1.3;min-width:0;overflow-wrap:anywhere}
+.step-desc{padding:0 var(--gut) 16px;font-size:13.5px;color:var(--sub);line-height:1.7}
 .step-desc strong{color:var(--ink)}
-.prompt-wrap{margin:0 20px 18px;position:relative}
+/* .step 내부 인라인 카드 공통 좌우 여백 */
+.inset{margin-left:var(--gut);margin-right:var(--gut)}
+.prompt-wrap{margin:0 var(--gut) 18px;position:relative}
 .prompt-label{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--mute);margin-bottom:6px;text-transform:uppercase}
 .prompt-label svg{width:14px;height:14px;fill:var(--mute)}
-.prompt-box{background:#0C1F1E;color:#D0E8E5;border-radius:8px;padding:18px 52px 18px 18px;font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;font-size:12.5px;line-height:1.85;white-space:pre-wrap;word-break:break-all;position:relative}
+.prompt-box{background:#0C1F1E;color:#D0E8E5;border-radius:8px;padding:18px 52px 18px 18px;font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;font-size:12.5px;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere;position:relative;max-width:100%}
 .prompt-box .hl{color:#FFC46B;font-weight:600}
 .prompt-box .fix{color:#86EFAC}
 .prompt-box .warn{color:#FF9A9A}
@@ -53,7 +59,7 @@ body{font-family:Pretendard,'Pretendard Variable',-apple-system,'Malgun Gothic',
 .copy-btn:hover{background:rgba(255,255,255,.2);color:#fff}
 .copy-btn.copied{background:var(--green);border-color:var(--green);color:#fff}
 .copy-btn svg{width:16px;height:16px;fill:currentColor}
-.tip{margin:0 20px 18px;padding:14px 16px;border-radius:8px;font-size:13px;line-height:1.65}
+.tip{margin:0 var(--gut) 18px;padding:14px 16px;border-radius:8px;font-size:13px;line-height:1.65}
 .tip.info{background:var(--accent-soft);border-left:3px solid var(--accent)}
 .tip.success{background:var(--green-soft);border-left:3px solid var(--green)}
 .tip.warning{background:var(--orange-soft);border-left:3px solid var(--orange)}
@@ -61,39 +67,45 @@ body{font-family:Pretendard,'Pretendard Variable',-apple-system,'Malgun Gothic',
 .tip.purple{background:var(--purple-soft);border-left:3px solid var(--purple)}
 .tip.blue{background:var(--blue-soft);border-left:3px solid var(--blue)}
 .tip b{display:block;margin-bottom:3px;font-size:13px}
-.checkpoint{background:var(--green-soft);border:1px solid #B8E0CC;border-radius:var(--radius);padding:20px;margin:24px 0}
+.checkpoint{background:var(--green-soft);border:1px solid #B8E0CC;border-radius:var(--radius);padding:var(--gut);margin:24px 0}
 .checkpoint h4{font-size:14px;font-weight:700;color:var(--green);margin-bottom:10px}
 .checkpoint ul{list-style:none;padding:0}
 .checkpoint li{font-size:13px;padding:4px 0;padding-left:22px;position:relative;color:var(--sub)}
 .checkpoint li::before{content:"☐";position:absolute;left:0;color:var(--green)}
 .divider{display:flex;align-items:center;gap:16px;margin:40px 0;font-size:14px;font-weight:700;color:var(--accent)}
 .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
-.style-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:0 20px 18px}
+.style-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:0 var(--gut) 18px}
 .style-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
 .style-card .preview{height:56px;border-radius:6px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#fff}
 .style-card .name{font-size:11.5px;font-weight:600;color:var(--ink)}
-.compare{margin:0 20px 18px;border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:13px}
+.compare{margin:0 var(--gut) 18px;border:1px solid var(--border);border-radius:8px;overflow-x:auto;font-size:13px}
 .compare table{width:100%;border-collapse:collapse}
 .compare th{background:#F5F5F2;font-weight:700;text-align:left;padding:10px 14px;font-size:12px;border-bottom:1px solid var(--border)}
 .compare td{padding:10px 14px;border-bottom:1px solid #F0F0EC;vertical-align:top}
 .compare tr:last-child td{border-bottom:none}
-footer{max-width:780px;margin:0 auto;padding:24px 24px 48px;border-top:1px solid var(--border);font-size:12.5px;color:var(--mute);line-height:1.6}
+footer{max-width:var(--maxw);margin:0 auto;width:100%;padding:24px var(--pad) 48px;border-top:1px solid var(--border);font-size:12.5px;color:var(--mute);line-height:1.6}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#042F2E;color:#fff;font-size:13.5px;font-weight:600;padding:10px 22px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:9999;opacity:0;transition:.3s ease;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* flow diagram */
-.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 20px 18px;font-size:13px;font-weight:600}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 var(--gut) 18px;font-size:13px;font-weight:600}
 .flow .box{background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center}
 .flow .box.db{background:#E6F5F3;border-color:#0F766E;color:#0F766E}
 .flow .box.gh{background:#EFF6FF;border-color:#2563EB;color:#2563EB}
 .flow .arrow{color:var(--mute);font-size:16px}
+@media(max-width:900px){
+  :root{--maxw:100%}
+}
 @media(max-width:600px){
-  .hero{padding:36px 20px 32px}.main{padding:0 16px 60px}
+  .hero{padding:36px var(--pad) 32px}.main{padding:0 var(--pad) 60px}
   .nav-inner{padding:0 8px}.nav-inner a{padding:12px 8px;font-size:11.5px}
-  .step-header{padding:16px 16px 12px}
-  .prompt-wrap,.tip,.compare,.style-grid,.flow{margin-left:16px;margin-right:16px}
-  .step-desc{padding:0 16px 14px}
+  .section{padding-top:36px}
   .style-grid{grid-template-columns:repeat(3,1fr)}
   .flow{font-size:11px}.flow .box{padding:6px 10px}
+  .compare table{min-width:420px}
+}
+@media(max-width:400px){
+  .style-grid{grid-template-columns:repeat(2,1fr)}
+  .step-header{gap:10px}
 }
 </style>
 </head>
@@ -104,8 +116,11 @@ footer{max-width:780px;margin:0 auto;padding:24px 24px 48px;border-top:1px solid
 <header class="hero">
   <div class="hero-inner">
     <div class="hero-badge">바이브코딩 2시간 수업 · 완전판</div>
-    <h1>디지털 명함 메이커<br>Supabase 저장 + GitHub 배포</h1>
-    <p>명함을 만들면 DB에 저장되고, GitHub Pages로 배포하면 누구나 URL로 접속해서 명함을 만들 수 있습니다.</p>
+    <h1>디지털 명함 메이커<br>Supabase 저장 + GitHub 배포 </h1>
+    <p>명함을 만들면 DB에 저장되고, GitHub Pages로 배포하면 누구나 URL로 접속해서 명함을 만들 수 있습니다.
+      <a href="https://blockout7777-web.github.io/namecard-maker/admin.html" target="_blank"><font color="white">관리자 페이지 / </font></a>
+      <a href="https://blockout7777-web.github.io/namecard-maker" target="_blank"><font color="white"> 실습 </font></a>
+    </p>
   </div>
 </header>
 
@@ -128,8 +143,7 @@ footer{max-width:780px;margin:0 auto;padding:24px 24px 48px;border-top:1px solid
 <section class="section" id="before">
   <div class="section-label"><span class="dot"></span>사전 준비</div>
   <h2>수업 전날까지 이것만 해 오세요</h2>
-  <p class="lead">수업 시작 후 설치·가입으로 20분을 잃는 것이 이 수업 최대의 사고입니다.</p>
-
+  
   <div class="step">
     <div class="step-header">
       <div class="step-num orange">!</div>
@@ -159,7 +173,7 @@ footer{max-width:780px;margin:0 auto;padding:24px 24px 48px;border-top:1px solid
     </div>
 
     <!-- ① VS Code -->
-    <div style="margin:0 20px 16px;background:#fff;border:1px solid #E5E5E0;border-radius:10px;padding:16px 18px">
+    <div class="inset" style="margin-bottom:16px;background:#fff;border:1px solid #E5E5E0;border-radius:10px;padding:16px 18px">
       <div style="font-size:14px;font-weight:700;color:#0F766E;margin-bottom:10px">① VS Code 설치 + 확장</div>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:13.5px">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -191,18 +205,18 @@ footer{max-width:780px;margin:0 auto;padding:24px 24px 48px;border-top:1px solid
     </div>
 
     <!-- ② GitHub -->
-    <div style="margin:0 20px 16px;background:#fff;border:1px solid #E5E5E0;border-radius:10px;padding:16px 18px">
+    <div class="inset" style="margin-bottom:16px;background:#fff;border:1px solid #E5E5E0;border-radius:10px;padding:16px 18px">
       <div style="font-size:14px;font-weight:700;color:#0F766E;margin-bottom:10px">② GitHub 가입 <span style="font-size:12px;font-weight:400;color:#9E9E9E">(먼저 가입 — Supabase에서 이 계정을 씁니다)</span></div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px">
         <span>👤 GitHub 회원가입</span>
-        <a href="https://github.com/signup" target="_blank" rel="noopener"
+        <a href="https://github.com" target="_blank" rel="noopener"
           style="display:inline-block;background:#24292F;color:#fff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:5px;text-decoration:none">가입하기 →</a>
         <span style="color:#9E9E9E;font-size:12px">이메일 인증까지 완료하면 ✓</span>
       </div>
     </div>
 
     <!-- ③ Supabase -->
-    <div style="margin:0 20px 16px;background:#fff;border:1px solid #E5E5E0;border-radius:10px;padding:16px 18px">
+    <div class="inset" style="margin-bottom:16px;background:#fff;border:1px solid #E5E5E0;border-radius:10px;padding:16px 18px">
       <div style="font-size:14px;font-weight:700;color:#0F766E;margin-bottom:10px">③ Supabase 가입 <span style="font-size:12px;font-weight:400;color:#9E9E9E">(GitHub 계정으로 가입하면 편합니다)</span></div>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:13.5px">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -218,7 +232,7 @@ footer{max-width:780px;margin:0 auto;padding:24px 24px 48px;border-top:1px solid
     </div>
 
     <!-- ④ 명함 정보 -->
-    <div style="margin:0 20px 16px;background:#fff;border:1px solid #E5E5E0;border-radius:10px;padding:16px 18px">
+    <div class="inset" style="margin-bottom:16px;background:#fff;border:1px solid #E5E5E0;border-radius:10px;padding:16px 18px">
       <div style="font-size:14px;font-weight:700;color:#0F766E;margin-bottom:10px">④ 명함 정보 준비 (테스트용)</div>
       <div style="font-size:13.5px;line-height:1.7">
         • 이름 / 직함 / 회사명 / 전화 / 이메일 / 주소를 메모장에 적어 오세요<br>
@@ -303,75 +317,75 @@ footer{max-width:780px;margin:0 auto;padding:24px 24px 48px;border-top:1px solid
       Table Editor에서 칼럼을 하나씩 추가하면 타입 선택, 기본값 설정을 11번 반복해야 합니다. SQL을 복사-붙여넣기하면 10초면 끝납니다. 칼럼 이름이나 타입을 잘못 입력하는 실수도 방지됩니다.
     </div>
 
-    <div class="step">
-      <div class="step-header">
-        <div class="step-num">1-b</div>
-        <h3>Project ID와 Publishable Key 넣기 — 두 칸이면 끝</h3>
-      </div>
-      <div class="step-desc">
-        Supabase 대시보드에서 <strong>두 군데</strong>를 복사합니다. 각각 Copy 버튼이 있어서 쉽습니다.<br>
-        붙여넣으면 URL과 KEY가 자동으로 정리되어 나타납니다.
-      </div>
+  </div>
 
-      <!-- ① Project ID -->
-      <div style="margin:0 20px 10px">
-        <div style="font-size:13px;font-weight:700;color:#0F766E;margin-bottom:4px">① Project ID 붙여넣기</div>
-        <div style="font-size:11.5px;color:#9E9E9E;margin-bottom:5px;line-height:1.5">
-          <strong>Project Settings</strong> (톱니바퀴) → <strong>General</strong> → "Project ID" 옆의 Copy 클릭
-        </div>
-        <input type="text" id="sb-projid" placeholder="beqargidvhttrbdkqcmf" oninput="updateSupabaseOutput()"
-          style="width:100%;padding:12px 14px;border:2px solid #0F766E;border-radius:8px;font-size:15px;font-family:ui-monospace,Menlo,monospace;background:#FAFFFE;outline:none;transition:.2s;letter-spacing:.5px"
-          onfocus="this.style.borderColor='#0D8A53';this.style.boxShadow='0 0 0 3px rgba(13,138,83,.15)'"
-          onblur="this.style.borderColor='#0F766E';this.style.boxShadow='none'">
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">1-b</div>
+      <h3>Project ID와 Publishable Key 넣기 — 두 칸이면 끝</h3>
+    </div>
+    <div class="step-desc">
+      Supabase 대시보드에서 <strong>두 군데</strong>를 복사합니다. 각각 Copy 버튼이 있어서 쉽습니다.<br>
+      붙여넣으면 URL과 KEY가 자동으로 정리되어 나타납니다.
+    </div>
+
+    <!-- ① Project ID -->
+    <div class="inset" style="margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;color:#0F766E;margin-bottom:4px">① Project ID 붙여넣기</div>
+      <div style="font-size:11.5px;color:#9E9E9E;margin-bottom:5px;line-height:1.5">
+        <strong>Project Settings</strong> (톱니바퀴) → <strong>General</strong> → "Project ID" 옆의 Copy 클릭
       </div>
+      <input type="text" id="sb-projid" placeholder="beqargidvhttrbdkqcmf" oninput="updateSupabaseOutput()"
+        style="width:100%;padding:12px 14px;border:2px solid #0F766E;border-radius:8px;font-size:15px;font-family:ui-monospace,Menlo,monospace;background:#FAFFFE;outline:none;transition:.2s;letter-spacing:.5px"
+        onfocus="this.style.borderColor='#0D8A53';this.style.boxShadow='0 0 0 3px rgba(13,138,83,.15)'"
+        onblur="this.style.borderColor='#0F766E';this.style.boxShadow='none'">
+    </div>
 
-      <!-- ② Publishable Key -->
-      <div style="margin:0 20px 14px">
-        <div style="font-size:13px;font-weight:700;color:#0F766E;margin-bottom:4px">② Publishable Key 붙여넣기</div>
-        <div style="font-size:11.5px;color:#9E9E9E;margin-bottom:5px;line-height:1.5">
-          <strong>API Keys</strong> → Publishable key 옆의 복사 버튼(📋) 클릭
-        </div>
-        <input type="text" id="sb-key" placeholder="sb_publishable_xxxxxxx_xxxxx_xxxxx" oninput="updateSupabaseOutput()"
-          style="width:100%;padding:12px 14px;border:2px solid #0F766E;border-radius:8px;font-size:14px;font-family:ui-monospace,Menlo,monospace;background:#FAFFFE;outline:none;transition:.2s"
-          onfocus="this.style.borderColor='#0D8A53';this.style.boxShadow='0 0 0 3px rgba(13,138,83,.15)'"
-          onblur="this.style.borderColor='#0F766E';this.style.boxShadow='none'">
+    <!-- ② Publishable Key -->
+    <div class="inset" style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:#0F766E;margin-bottom:4px">② Publishable Key 붙여넣기</div>
+      <div style="font-size:11.5px;color:#9E9E9E;margin-bottom:5px;line-height:1.5">
+        <strong>API Keys</strong> → Publishable key 옆의 복사 버튼(📋) 클릭
       </div>
+      <input type="text" id="sb-key" placeholder="sb_publishable_xxxxxxx_xxxxx_xxxxx" oninput="updateSupabaseOutput()"
+        style="width:100%;padding:12px 14px;border:2px solid #0F766E;border-radius:8px;font-size:14px;font-family:ui-monospace,Menlo,monospace;background:#FAFFFE;outline:none;transition:.2s"
+        onfocus="this.style.borderColor='#0D8A53';this.style.boxShadow='0 0 0 3px rgba(13,138,83,.15)'"
+        onblur="this.style.borderColor='#0F766E';this.style.boxShadow='none'">
+    </div>
 
-      <!-- 하나만 입력 시 안내 -->
-      <div id="sb-partial-msg" style="margin:0 20px 14px;display:none">
-        <div style="background:#FFF3E0;border-left:3px solid #C96800;border-radius:8px;padding:12px 16px;font-size:13px;color:#92400E">
-          <b id="sb-partial-text"></b>
-        </div>
+    <!-- 하나만 입력 시 안내 -->
+    <div class="inset" id="sb-partial-msg" style="margin-bottom:14px;display:none">
+      <div style="background:#FFF3E0;border-left:3px solid #C96800;border-radius:8px;padding:12px 16px;font-size:13px;color:#92400E">
+        <b id="sb-partial-text"></b>
       </div>
+    </div>
 
-      <!-- 둘 다 입력 시 결과 -->
-      <div id="sb-output-wrap" style="margin:0 20px 18px;display:none">
-        <div style="background:#E4F5ED;border:2px solid #0D8A53;border-radius:10px;padding:18px">
-          <div style="font-size:14px;font-weight:700;color:#0D8A53;margin-bottom:14px">\u2705 완료! 아래에서 복사하세요</div>
+    <!-- 둘 다 입력 시 결과 -->
+    <div class="inset" id="sb-output-wrap" style="margin-bottom:18px;display:none">
+      <div style="background:#E4F5ED;border:2px solid #0D8A53;border-radius:10px;padding:18px">
+        <div style="font-size:14px;font-weight:700;color:#0D8A53;margin-bottom:14px">\u2705 완료! 아래에서 복사하세요</div>
 
-          <div style="margin-bottom:10px">
-            <div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:4px">\ud83d\udce1 PROJECT URL (자동 생성)</div>
-            <div class="prompt-box" id="sb-url-out" style="background:#0A2E1A;border:1px solid #0D8A53;padding:10px 52px 10px 14px;font-size:14px;line-height:1.4;border-radius:6px">
+        <div style="margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:4px">\ud83d\udce1 PROJECT URL (자동 생성)</div>
+          <div class="prompt-box" id="sb-url-out" style="background:#0A2E1A;border:1px solid #0D8A53;padding:10px 52px 10px 14px;font-size:14px;line-height:1.4;border-radius:6px">
 <button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
-          </div>
+        </div>
 
-          <div style="margin-bottom:10px">
-            <div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:4px">\ud83d\udd11 PUBLISHABLE KEY</div>
-            <div class="prompt-box" id="sb-key-out" style="background:#0A2E1A;border:1px solid #0D8A53;padding:10px 52px 10px 14px;font-size:13px;line-height:1.4;word-break:break-all;border-radius:6px">
+        <div style="margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:4px">\ud83d\udd11 PUBLISHABLE KEY</div>
+          <div class="prompt-box" id="sb-key-out" style="background:#0A2E1A;border:1px solid #0D8A53;padding:10px 52px 10px 14px;font-size:13px;line-height:1.4;word-break:break-all;border-radius:6px">
 <button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
-          </div>
+        </div>
 
-          <div>
-            <div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:4px">\ud83d\udd17 \ud504\ub85c\ud504\ud2b8\uc5d0 \ubd99\uc5ec\ub123\uae30\uc6a9 (URL + KEY \ud55c\ubc88\uc5d0 \ubcf5\uc0ac)</div>
-            <div class="prompt-box" id="sb-both-out" style="background:#0A2E1A;border:1px solid #0D8A53;padding:12px 52px 12px 14px;font-size:14px;line-height:1.8;border-radius:6px">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#065F46;margin-bottom:4px">\ud83d\udd17 \ud504\ub85c\ud504\ud2b8\uc5d0 \ubd99\uc5ec\ub123\uae30\uc6a9 (URL + KEY \ud55c\ubc88\uc5d0 \ubcf5\uc0ac)</div>
+          <div class="prompt-box" id="sb-both-out" style="background:#0A2E1A;border:1px solid #0D8A53;padding:12px 52px 12px 14px;font-size:14px;line-height:1.8;border-radius:6px">
 <button class="copy-btn" onclick="copyPrompt(this)" title="복사"><svg viewBox="0 0 16 16"><path d="M5 2a1 1 0 00-1 1v1H3a1 1 0 00-1 1v9a1 1 0 001 1h8a1 1 0 001-1v-1h1a1 1 0 001-1V3a1 1 0 00-1-1H5zm0 1h8v9h-1V5a1 1 0 00-1-1H5V3zm-2 2h8v9H3V5z"/></svg></button></div>
-          </div>
         </div>
       </div>
     </div>
   </div>
 
-  </div>
 
   <!-- STEP 2 -->
   <div class="step">
